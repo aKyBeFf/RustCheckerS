@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rust Checker — статус серверов и игроков</title>
+  <link rel="icon" type="image/png" href="logo.png?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=16" />
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-logo" viewBox="0 0 24 24">
+        <path d="M12 2 4 6v6c0 4.5 3.2 8.5 8 10 4.8-1.5 8-5.5 8-10V6l-8-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M9 12.5l2 2 4-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-server" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="3" y="13" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="7" cy="7.5" r="1" fill="currentColor"/>
+        <circle cx="7" cy="16.5" r="1" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M16 5.5c1.6.4 2.7 1.8 2.7 3.4 0 1-.4 1.9-1 2.5M17 14.2c2.3.5 3.8 2.3 3.8 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-pulse" viewBox="0 0 24 24">
+        <path d="M3 12h4l2.5-6 4 12 2.5-6H21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 24 24">
+        <path d="M9.5 14.5 14.5 9.5M8 13l-2 2a3.5 3.5 0 1 0 5 5l2-2M16 11l2-2a3.5 3.5 0 1 0-5-5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3 5 6v5c0 4 3 7.5 7 9 4-1.5 7-5 7-9V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-back" viewBox="0 0 24 24">
+        <path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="4.5" y="10" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="12" cy="15" r="1.4" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <path d="m20 20-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24">
+        <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      </symbol>
+      <symbol id="i-history" viewBox="0 0 24 24">
+        <path d="M3.5 12a8.5 8.5 0 1 1 2.6 6.1M3.5 12V7M3.5 12h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 8v4.2l3 1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-radar" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".55"/>
+        <path d="M12 12 18 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="1.4" fill="currentColor"/>
+        <circle cx="16" cy="9" r="1.1" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-stats" viewBox="0 0 24 24">
+        <path d="M4 20V4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M4 20h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="7" y="12" width="3" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="12.5" y="8" width="3" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="18" y="10.5" width="3" height="6.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      </symbol>
+      <symbol id="i-steam" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="15" cy="9.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="8.5" cy="15" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="m10.4 14.2 4-3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <video class="bg-video" autoplay muted loop playsinline aria-hidden="true">
+    <source src="bg.mp4" type="video/mp4" />
+  </video>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="#" data-go="landing">
+      <img class="brand-logo" src="logo.png?v=2" alt="RustChecker" />
+      <span class="brand-name">Rust<span>Checker</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#" data-go="landing">Главная</a>
+      <a href="#" data-go="checker" id="navServers" style="display:none">Серверы</a>
+      <a href="#features">Возможности</a>
+      <a href="#" data-go="register">Rust+</a>
+    </nav>
+    <button class="btn btn-ghost" id="navLogin">
+      <svg class="ic"><use href="#i-user"/></svg>
+      Войти
+    </button>
+    <button class="nav-user" id="navUser" style="display:none" title="Мой аккаунт">
+      <span class="avatar" id="navAvatar"><svg class="ic"><use href="#i-user"/></svg></span>
+      <span class="nav-username" id="navUsername">—</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="view active" data-view="landing">
+      <div class="hero">
+        <h1>Проверяй серверы и игроков <span class="grad">за секунды</span></h1>
+        <p class="sub">Статус, онлайн, FPS и время до вайпа — всё в одном месте. Создай аккаунт и подключи Rust+ для управления прямо с сайта.</p>
+
+        <div class="cta-row">
+          <button class="btn btn-primary btn-lg" data-go="register">
+            Попробовать <svg class="ic"><use href="#i-arrow"/></svg>
+          </button>
+          <a class="btn btn-ghost btn-lg" href="#features">Что умеет</a>
+        </div>
+      </div>
+
+      <div class="features" id="features">
+        <div class="section-head center">
+          <span class="pill"><svg class="ic"><use href="#i-shield"/></svg> Что умеет Rust Checker</span>
+          <h2>Всё для мониторинга в одном интерфейсе</h2>
+        </div>
+        <div class="feat-grid">
+          <article class="feat reveal">
+            <div class="feat-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
+            <h3>Отслеживание игроков</h3>
+            <p>Найдите игрока и нажмите «Отследить». Как только человек выйдет из игры — вам придёт сообщение в Telegram.</p>
+          </article>
+          <article class="feat reveal">
+            <div class="feat-ic"><svg class="ic"><use href="#i-server"/></svg></div>
+            <h3>Список серверов</h3>
+            <p>Можно найти почти любой сервер и посмотреть всю информацию о нём.</p>
+          </article>
+          <article class="feat reveal">
+            <div class="feat-ic"><svg class="ic"><use href="#i-stats"/></svg></div>
+            <h3>Информация об игроке</h3>
+            <p>Узнайте, сколько всего наиграли, какой у вас K/D, сколько ресурсов нафармили и многое другое!</p>
+          </article>
+          <article class="feat reveal">
+            <div class="feat-ic"><svg class="ic"><use href="#i-history"/></svg></div>
+            <h3>История никнеймов</h3>
+            <p>Пробейте игрока по прошлым никам и Steam-аккаунтам — удобно, чтобы вычислить читера или найти старого тиммейта.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="checker">
+      <div class="checker">
+        <div class="checker-head">
+          <h2>Проверка серверов и игроков</h2>
+          <div class="search-tabs" id="bmTabs">
+            <button class="stab active" data-bm="servers">Серверы</button>
+            <button class="stab" data-bm="players">Игроки</button>
+          </div>
+        </div>
+
+        <form id="bmForm" class="bm-search">
+          <div class="input">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="bmInput" placeholder="Название сервера…" autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" type="submit" id="bmBtn">Найти</button>
+        </form>
+
+        <p class="form-err" id="bmErr"></p>
+        <div id="bmResults" class="bm-results"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="server">
+      <div class="checker">
+        <button class="link-back" data-go="checker"><svg class="ic"><use href="#i-back"/></svg> К поиску</button>
+        <div id="serverDetail"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="player">
+      <div class="checker">
+        <button class="link-back" data-go="checker"><svg class="ic"><use href="#i-back"/></svg> К поиску</button>
+        <div id="playerDetail"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="register">
+      <div class="auth">
+        <button class="link-back" data-go="landing"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
+
+        <div class="auth-card">
+          <div class="auth-head">
+            <span class="brand-mark lg"><svg class="ic"><use href="#i-logo"/></svg></span>
+            <h2 id="authTitle">Создать аккаунт</h2>
+            <p id="authSubtitle">Зарегистрируйся, чтобы отслеживать игроков и подключить Rust+.</p>
+          </div>
+
+          <form id="registerForm" class="form" novalidate>
+            <label class="field" id="nickField">
+              <span id="nickLabel">Логин</span>
+              <div class="input">
+                <svg class="ic"><use href="#i-user"/></svg>
+                <input name="nick" type="text" placeholder="Придумай логин" />
+              </div>
+            </label>
+            <label class="field" id="emailField">
+              <span>Email</span>
+              <div class="input">
+                <svg class="ic"><use href="#i-mail"/></svg>
+                <input name="email" type="email" placeholder="you@example.com" />
+              </div>
+            </label>
+            <label class="field">
+              <span>Пароль</span>
+              <div class="input">
+                <svg class="ic"><use href="#i-lock"/></svg>
+                <input name="password" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+              </div>
+            </label>
+
+            <p class="form-err" id="regErr"></p>
+            <p class="form-ok" id="regOk"></p>
+
+            <button class="btn btn-primary btn-lg full" type="submit" id="authSubmit">
+              Создать аккаунт <svg class="ic"><use href="#i-arrow"/></svg>
+            </button>
+
+            <p class="auth-alt" id="authSwitch">Уже есть аккаунт? <a href="#" id="toLogin">Войти</a></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="verify">
+      <div class="auth">
+        <button class="link-back" id="verifyBack"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
+
+        <div class="auth-card">
+          <div class="auth-head">
+            <span class="brand-mark lg"><svg class="ic"><use href="#i-mail"/></svg></span>
+            <h2>Подтверди почту</h2>
+            <p>Мы отправили 6-значный код на <b id="verifyEmail">—</b></p>
+          </div>
+
+          <form id="verifyForm" class="form" novalidate>
+            <label class="field">
+              <span>Код из письма</span>
+              <div class="otp-cells" id="otpCells">
+                <input class="otp-cell" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
+                <input class="otp-cell" inputmode="numeric" maxlength="1" />
+                <input class="otp-cell" inputmode="numeric" maxlength="1" />
+                <input class="otp-cell" inputmode="numeric" maxlength="1" />
+                <input class="otp-cell" inputmode="numeric" maxlength="1" />
+                <input class="otp-cell" inputmode="numeric" maxlength="1" />
+              </div>
+            </label>
+
+            <p class="form-err" id="verifyErr"></p>
+            <p class="form-ok" id="verifyOk"></p>
+
+            <button class="btn btn-primary btn-lg full" type="submit" id="verifyBtn">
+              Подтвердить <svg class="ic"><use href="#i-arrow"/></svg>
+            </button>
+
+            <p class="auth-alt">Не пришёл код? <a href="#" id="resendBtn">Отправить ещё раз</a></p>
+          </form>
+        </div>
+        <p class="auth-note">Код отправляет сервис RustChecker, действует 10 минут.</p>
+      </div>
+    </section>
+
+    <section class="view" data-view="connect">
+      <div class="connect">
+        <div class="welcome">
+          <span class="ok-badge"><svg class="ic"><use href="#i-check"/></svg></span>
+          <h2>Добро пожаловать, <span id="userName">игрок</span>!</h2>
+          <p id="tierLine">Твой тариф: <span class="tier-badge free" id="tierBadge">FREE</span></p>
+        </div>
+
+        <div class="activate-card">
+          <div class="ac-head">
+            <div class="cc-ic"><svg class="ic"><use href="#i-lock"/></svg></div>
+            <div>
+              <h3>Активация ключа</h3>
+              <p>Введи ключ, чтобы получить <b>Premium</b> или <b>Unlimited</b>.</p>
+            </div>
+          </div>
+          <form id="keyForm" class="key-row">
+            <div class="input">
+              <svg class="ic"><use href="#i-bolt"/></svg>
+              <input id="keyInput" type="text" placeholder="RUSTCHK-XXXX-XXXX" autocomplete="off" />
+            </div>
+            <button class="btn btn-primary" type="submit" id="keyBtn">Активировать</button>
+          </form>
+          <p class="form-err" id="keyErr"></p>
+          <p class="form-ok" id="keyOk"></p>
+        </div>
+
+        <div class="connect-grid">
+          <article class="connect-card highlight">
+            <div class="cc-ic"><svg class="ic"><use href="#i-link"/></svg></div>
+            <h3>Подключить Rust+</h3>
+            <p>Свяжи аккаунт с игрой через Steam и pairing, чтобы видеть карту команды и устройства.</p>
+            <button class="btn btn-primary full" id="pairBtn">
+              <svg class="ic"><use href="#i-bolt"/></svg> Подключить сейчас
+            </button>
+          </article>
+
+          <article class="connect-card" id="steamCard">
+            <div class="cc-ic"><svg class="ic"><use href="#i-steam"/></svg></div>
+            <h3>Привязать Steam</h3>
+            <p id="steamCardText">Для проверки часов в игре, VAC-статуса и аватарки в профиле.</p>
+            <button class="btn btn-ghost full" id="steamLinkBtn">
+              <svg class="ic"><use href="#i-steam"/></svg> Привязать Steam
+            </button>
+          </article>
+
+          <article class="connect-card" id="tgCard">
+            <div class="cc-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
+            <h3>Уведомления Telegram</h3>
+            <p id="tgText">Привяжи Telegram, чтобы получать сообщения, когда отслеживаемый игрок зашёл или вышел с сервера.</p>
+            <button class="btn btn-ghost full" id="tgBtn">
+              <svg class="ic"><use href="#i-radar"/></svg> Привязать Telegram
+            </button>
+          </article>
+        </div>
+
+        <div class="connect-foot">
+          <button class="link-back center-link" data-go="landing">На главную →</button>
+          <button class="link-back" id="logoutBtn"><svg class="ic"><use href="#i-back"/></svg> Выйти</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="rustplus">
+      <div class="checker">
+        <button class="link-back" data-go="connect"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
+
+        <div class="detail-card">
+          <div class="detail-top">
+            <h2><svg class="ic"><use href="#i-link"/></svg> Подключить Rust+</h2>
+            <span class="badge">BETA</span>
+          </div>
+
+          <p class="detail-hint">
+            Rust+ подключается по данным паринга сервера: <b>IP</b>, <b>порт</b>, твой <b>SteamID64</b> и <b>Player Token</b>.
+            Токен выдаёт игра при нажатии «Pair with server» в меню Rust+ внутри Rust.
+            Сохранённые серверы затем читает наш Rust+ сервис (rustplus.js) и показывает онлайн команды, устройства и карту.
+          </p>
+
+          <form id="rpForm" class="form">
+            <div class="rp-grid">
+              <label class="field"><span>Название</span>
+                <div class="input"><svg class="ic"><use href="#i-server"/></svg>
+                  <input name="name" type="text" placeholder="Мой сервер" /></div>
+              </label>
+              <label class="field"><span>IP</span>
+                <div class="input"><svg class="ic"><use href="#i-pin"/></svg>
+                  <input name="ip" type="text" placeholder="128.0.0.1" /></div>
+              </label>
+              <label class="field"><span>Порт</span>
+                <div class="input"><svg class="ic"><use href="#i-link"/></svg>
+                  <input name="port" type="number" placeholder="28082" /></div>
+              </label>
+              <label class="field"><span>SteamID64</span>
+                <div class="input"><svg class="ic"><use href="#i-steam"/></svg>
+                  <input name="steamId" type="text" placeholder="7656119..." /></div>
+              </label>
+              <label class="field rp-wide"><span>Player Token</span>
+                <div class="input"><svg class="ic"><use href="#i-lock"/></svg>
+                  <input name="token" type="number" placeholder="Число из игры" /></div>
+              </label>
+            </div>
+            <p class="form-err" id="rpErr"></p>
+            <p class="form-ok" id="rpOk"></p>
+            <button class="btn btn-primary btn-lg full" type="submit" id="rpBtn">Сохранить сервер</button>
+          </form>
+        </div>
+
+        <h3 class="d-players-title">Подключённые серверы</h3>
+        <div id="rpList" class="bm-results"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-brand">
+      <span class="brand-mark sm"><svg class="ic"><use href="#i-logo"/></svg></span>
+      RustChecker
+    </div>
+    <p>Набросок интерфейса · данные демонстрационные · не аффилирован с Facepunch Studios</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js?v=17"></script>
+  <script src="app.js?v=17"></script>
+</body>
+</html>
