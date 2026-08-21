@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=16" />
+  <link rel="stylesheet" href="styles.css?v=29" />
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -62,6 +62,9 @@
       <symbol id="i-check" viewBox="0 0 24 24">
         <path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
       <symbol id="i-search" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
         <path d="m20 20-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -113,18 +116,26 @@
     </a>
     <nav class="nav-links">
       <a href="#" data-go="landing">Главная</a>
-      <a href="#" data-go="checker" id="navServers" style="display:none">Серверы</a>
+      <a href="#" data-go="checker" id="navServers" style="display:none">Найти сервер</a>
       <a href="#features">Возможности</a>
-      <a href="#" data-go="register">Rust+</a>
     </nav>
     <button class="btn btn-ghost" id="navLogin">
       <svg class="ic"><use href="#i-user"/></svg>
       Войти
     </button>
-    <button class="nav-user" id="navUser" style="display:none" title="Мой аккаунт">
-      <span class="avatar" id="navAvatar"><svg class="ic"><use href="#i-user"/></svg></span>
-      <span class="nav-username" id="navUsername">—</span>
-    </button>
+    <div class="nav-user-wrap" id="navUserWrap" style="display:none">
+      <button class="nav-user" id="navUser" title="Мой аккаунт">
+        <span class="avatar" id="navAvatar"><svg class="ic"><use href="#i-user"/></svg></span>
+        <span class="nav-username" id="navUsername">—</span>
+        <svg class="ic chev"><use href="#i-chevron"/></svg>
+      </button>
+      <div class="nav-menu" id="navMenu">
+        <button data-go="profile"><svg class="ic"><use href="#i-user"/></svg> Профиль</button>
+        <button data-go="tracked"><svg class="ic"><use href="#i-radar"/></svg> Отслеживаемые</button>
+        <button data-go="subscription"><svg class="ic"><use href="#i-bolt"/></svg> Подписка</button>
+        <button id="menuLogout"><svg class="ic"><use href="#i-back"/></svg> Выход</button>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -174,11 +185,7 @@
     <section class="view" data-view="checker">
       <div class="checker">
         <div class="checker-head">
-          <h2>Проверка серверов и игроков</h2>
-          <div class="search-tabs" id="bmTabs">
-            <button class="stab active" data-bm="servers">Серверы</button>
-            <button class="stab" data-bm="players">Игроки</button>
-          </div>
+          <h2>Найти сервер</h2>
         </div>
 
         <form id="bmForm" class="bm-search">
@@ -214,7 +221,7 @@
 
         <div class="auth-card">
           <div class="auth-head">
-            <span class="brand-mark lg"><svg class="ic"><use href="#i-logo"/></svg></span>
+            <img class="brand-logo xl" src="logo.png?v=2" alt="RustChecker" />
             <h2 id="authTitle">Создать аккаунт</h2>
             <p id="authSubtitle">Зарегистрируйся, чтобы отслеживать игроков и подключить Rust+.</p>
           </div>
@@ -293,31 +300,20 @@
       </div>
     </section>
 
-    <section class="view" data-view="connect">
+    <section class="view" data-view="profile">
       <div class="connect">
-        <div class="welcome">
-          <span class="ok-badge"><svg class="ic"><use href="#i-check"/></svg></span>
-          <h2>Добро пожаловать, <span id="userName">игрок</span>!</h2>
-          <p id="tierLine">Твой тариф: <span class="tier-badge free" id="tierBadge">FREE</span></p>
+        <div class="profile-head">
+          <span class="avatar lg" id="profAvatar"><svg class="ic"><use href="#i-user"/></svg></span>
+          <div class="profile-id">
+            <h2 id="userName">игрок</h2>
+            <p>Тариф: <span class="tier-badge free" id="tierBadge">FREE</span></p>
+          </div>
         </div>
 
-        <div class="activate-card">
-          <div class="ac-head">
-            <div class="cc-ic"><svg class="ic"><use href="#i-lock"/></svg></div>
-            <div>
-              <h3>Активация ключа</h3>
-              <p>Введи ключ, чтобы получить <b>Premium</b> или <b>Unlimited</b>.</p>
-            </div>
-          </div>
-          <form id="keyForm" class="key-row">
-            <div class="input">
-              <svg class="ic"><use href="#i-bolt"/></svg>
-              <input id="keyInput" type="text" placeholder="RUSTCHK-XXXX-XXXX" autocomplete="off" />
-            </div>
-            <button class="btn btn-primary" type="submit" id="keyBtn">Активировать</button>
-          </form>
-          <p class="form-err" id="keyErr"></p>
-          <p class="form-ok" id="keyOk"></p>
+        <div class="stats-card">
+          <h3 class="d-players-title">Статистика Rust</h3>
+          <div class="detail-grid" id="statsGrid"></div>
+          <p class="detail-hint" id="statsHint">Привяжи Steam, чтобы подтянуть статистику Rust.</p>
         </div>
 
         <div class="connect-grid">
@@ -348,17 +344,70 @@
             </button>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="connect-foot">
-          <button class="link-back center-link" data-go="landing">На главную →</button>
-          <button class="link-back" id="logoutBtn"><svg class="ic"><use href="#i-back"/></svg> Выйти</button>
+    <section class="view" data-view="subscription">
+      <div class="connect">
+        <div class="welcome">
+          <span class="ok-badge"><svg class="ic"><use href="#i-bolt"/></svg></span>
+          <h2>Подписка</h2>
+          <p>Текущий тариф: <span class="tier-badge free" id="subTierBadge">FREE</span></p>
+        </div>
+
+        <div class="plan-status" id="planStatus" hidden></div>
+
+        <div class="plans two" id="plansGrid">
+          <article class="plan-card">
+            <h3>Premium</h3>
+            <p class="plan-price">100 <span>⭐</span></p>
+            <p class="plan-sub">в месяц</p>
+            <ul class="plan-feats">
+              <li>До 8 отслеживаний игроков</li>
+              <li>Просмотр чужой статистики Rust</li>
+              <li>Уведомления в Telegram</li>
+            </ul>
+            <button class="btn btn-ghost full" data-buy="premium">Купить за ⭐ 100</button>
+          </article>
+          <article class="plan-card featured">
+            <div class="plan-badge">Максимум</div>
+            <h3>Unlimited</h3>
+            <p class="plan-price">200 <span>⭐</span></p>
+            <p class="plan-sub">в месяц</p>
+            <ul class="plan-feats">
+              <li>Безлимит отслеживаний</li>
+              <li>Безлимит привязок</li>
+              <li>Всё из Premium + бонусы</li>
+            </ul>
+            <button class="btn btn-primary full" data-buy="unlimited">Купить за ⭐ 200</button>
+          </article>
+        </div>
+        <div class="buy-notice" id="buyNotice" hidden></div>
+
+        <div class="activate-card">
+          <div class="ac-head">
+            <div class="cc-ic"><svg class="ic"><use href="#i-lock"/></svg></div>
+            <div>
+              <h3>Активация ключа</h3>
+              <p>Есть промо-ключ? Введи его для <b>Premium</b> или <b>Unlimited</b>.</p>
+            </div>
+          </div>
+          <form id="keyForm" class="key-row">
+            <div class="input">
+              <svg class="ic"><use href="#i-bolt"/></svg>
+              <input id="keyInput" type="text" placeholder="RUSTCHK-XXXX-XXXX" autocomplete="off" />
+            </div>
+            <button class="btn btn-primary" type="submit" id="keyBtn">Активировать</button>
+          </form>
+          <p class="form-err" id="keyErr"></p>
+          <p class="form-ok" id="keyOk"></p>
         </div>
       </div>
     </section>
 
     <section class="view" data-view="rustplus">
       <div class="checker">
-        <button class="link-back" data-go="connect"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
+        <button class="link-back" data-go="profile"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
 
         <div class="detail-card">
           <div class="detail-top">
@@ -367,10 +416,10 @@
           </div>
 
           <p class="detail-hint">
-            Rust+ подключается по данным паринга сервера: <b>IP</b>, <b>порт</b>, твой <b>SteamID64</b> и <b>Player Token</b>.
-            Токен выдаёт игра при нажатии «Pair with server» в меню Rust+ внутри Rust.
-            Сохранённые серверы затем читает наш Rust+ сервис (rustplus.js) и показывает онлайн команды, устройства и карту.
+            <b>SteamID</b> подставляется автоматически из привязанного Steam — вводить не нужно.
+            Остаётся <b>IP</b>, <b>порт</b> и <b>Player Token</b> (его выдаёт игра при нажатии «Pair with server» в меню Rust+ внутри Rust — это единственное, что должен сделать сам Facepunch, обойти нельзя).
           </p>
+          <p class="detail-hint" id="rpSteamNote"></p>
 
           <form id="rpForm" class="form">
             <div class="rp-grid">
@@ -405,18 +454,62 @@
         <div id="rpList" class="bm-results"></div>
       </div>
     </section>
+
+    <section class="view" data-view="tracked">
+      <div class="checker">
+        <div class="checker-head"><h2>Отслеживаемые игроки</h2></div>
+        <p class="detail-hint">Список игроков, за которыми ты следишь. Открой профиль, чтобы посмотреть, где играет, или удали из отслеживания.</p>
+        <div id="trackedList" class="bm-results"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="privacy">
+      <div class="checker">
+        <button class="link-back" data-go="landing"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
+        <div class="detail-card">
+          <div class="detail-top"><h2>Политика данных</h2></div>
+          <div class="policy">
+            <p>RustChecker — сервис для проверки серверов и игроков Rust. Ниже — какие данные мы собираем и зачем.</p>
+            <h3>Что мы храним</h3>
+            <ul>
+              <li><b>Аккаунт:</b> логин, email и пароль (пароль хранится в зашифрованном виде на стороне Supabase).</li>
+              <li><b>Привязки:</b> SteamID и данные Rust+ паринга, если ты их добавил, — только для работы функций сервиса.</li>
+              <li><b>Telegram:</b> ID чата, если ты привязал бота, — чтобы присылать уведомления.</li>
+              <li><b>Отслеживания:</b> каких игроков и на каких серверах ты отслеживаешь.</li>
+            </ul>
+            <h3>Зачем</h3>
+            <ul>
+              <li>Показывать статус серверов и игроков (данные берутся из публичного API BattleMetrics).</li>
+              <li>Присылать уведомления в Telegram о заходе/выходе игрока.</li>
+              <li>Управление аккаунтом и подпиской.</li>
+            </ul>
+            <h3>Что мы НЕ делаем</h3>
+            <ul>
+              <li>Не продаём и не передаём твои данные третьим лицам.</li>
+              <li>Не собираем данные, не относящиеся к работе сервиса.</li>
+            </ul>
+            <h3>Удаление</h3>
+            <p>Ты можешь в любой момент отвязать Steam/Telegram и удалить отслеживания. Для полного удаления аккаунта — напиши нам.</p>
+            <p class="policy-note">Проект никак не связан с Facepunch Studios и Rust. Все товарные знаки принадлежат их владельцам.</p>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="foot">
     <div class="foot-brand">
-      <span class="brand-mark sm"><svg class="ic"><use href="#i-logo"/></svg></span>
+      <img class="brand-logo sm" src="logo.png?v=2" alt="RustChecker" />
       RustChecker
     </div>
-    <p>Набросок интерфейса · данные демонстрационные · не аффилирован с Facepunch Studios</p>
+    <div class="foot-links">
+      <a href="#" data-go="privacy">Политика данных</a>
+      <p>Проект никак не связан с Facepunch Studios</p>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=17"></script>
-  <script src="app.js?v=17"></script>
+  <script src="config.js?v=33"></script>
+  <script src="app.js?v=33"></script>
 </body>
 </html>
