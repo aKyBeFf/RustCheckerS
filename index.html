@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="stylesheet" href="styles.css?v=34" />
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -32,7 +32,9 @@
         <path d="M3 12h4l2.5-6 4 12 2.5-6H21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
       <symbol id="i-link" viewBox="0 0 24 24">
-        <path d="M9.5 14.5 14.5 9.5M8 13l-2 2a3.5 3.5 0 1 0 5 5l2-2M16 11l2-2a3.5 3.5 0 1 0-5-5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M9 2.5v4.5M15 2.5v4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M6.5 7h11v3.5a5.5 5.5 0 0 1-11 0V7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        <path d="M12 16v5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
       </symbol>
       <symbol id="i-bolt" viewBox="0 0 24 24">
         <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -96,10 +98,7 @@
         <rect x="18" y="10.5" width="3" height="6.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
       </symbol>
       <symbol id="i-steam" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <circle cx="15" cy="9.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <circle cx="8.5" cy="15" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <path d="m10.4 14.2 4-3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path fill="currentColor" d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012zM17.245 7.75c1.665 0 3.02-1.354 3.02-3.02s-1.355-3.02-3.02-3.02-3.02 1.354-3.02 3.02 1.355 3.02 3.02 3.02zm0-4.53c.831 0 1.51.679 1.51 1.51s-.679 1.51-1.51 1.51-1.51-.679-1.51-1.51.679-1.51 1.51-1.51z"/>
       </symbol>
     </defs>
   </svg>
@@ -117,7 +116,7 @@
     <nav class="nav-links">
       <a href="#" data-go="landing">Главная</a>
       <a href="#" data-go="checker" id="navServers" style="display:none">Найти сервер</a>
-      <a href="#features">Возможности</a>
+      <a href="#features" id="navFeatures">Возможности</a>
     </nav>
     <button class="btn btn-ghost" id="navLogin">
       <svg class="ic"><use href="#i-user"/></svg>
@@ -158,25 +157,25 @@
           <h2>Всё для мониторинга в одном интерфейсе</h2>
         </div>
         <div class="feat-grid">
-          <article class="feat reveal">
+          <article class="feat reveal feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
             <h3>Отслеживание игроков</h3>
             <p>Найдите игрока и нажмите «Отследить». Как только человек выйдет из игры — вам придёт сообщение в Telegram.</p>
           </article>
-          <article class="feat reveal">
+          <article class="feat reveal feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-server"/></svg></div>
             <h3>Список серверов</h3>
             <p>Можно найти почти любой сервер и посмотреть всю информацию о нём.</p>
           </article>
-          <article class="feat reveal">
+          <article class="feat reveal feat-link" data-feat="lookup">
             <div class="feat-ic"><svg class="ic"><use href="#i-stats"/></svg></div>
-            <h3>Информация об игроке</h3>
-            <p>Узнайте, сколько всего наиграли, какой у вас K/D, сколько ресурсов нафармили и многое другое!</p>
+            <h3>Узнать статистику <span class="tag-soon">Premium</span></h3>
+            <p>Сколько наиграли, K/D, сколько ресурсов нафармили и многое другое — по любому игроку.</p>
           </article>
-          <article class="feat reveal">
+          <article class="feat reveal feat-link" data-feat="lookup">
             <div class="feat-ic"><svg class="ic"><use href="#i-history"/></svg></div>
-            <h3>История никнеймов</h3>
-            <p>Пробейте игрока по прошлым никам и Steam-аккаунтам — удобно, чтобы вычислить читера или найти старого тиммейта.</p>
+            <h3>Профиль игрока <span class="tag-soon">Premium</span></h3>
+            <p>Ник, аватар и полная статистика Rust любого игрока по SteamID или ссылке.</p>
           </article>
         </div>
       </div>
@@ -317,21 +316,21 @@
         </div>
 
         <div class="connect-grid">
-          <article class="connect-card highlight">
+          <article class="connect-card highlight" id="rpCard">
             <div class="cc-ic"><svg class="ic"><use href="#i-link"/></svg></div>
-            <h3>Подключить Rust+</h3>
-            <p>Свяжи аккаунт с игрой через Steam и pairing, чтобы видеть карту команды и устройства.</p>
+            <h3 id="rpCardTitle">Подключить Rust+</h3>
+            <p id="rpCardText">Свяжи аккаунт с игрой через Steam и pairing, чтобы видеть карту команды и устройства.</p>
             <button class="btn btn-primary full" id="pairBtn">
               <svg class="ic"><use href="#i-bolt"/></svg> Подключить сейчас
             </button>
           </article>
 
           <article class="connect-card" id="steamCard">
-            <div class="cc-ic"><svg class="ic"><use href="#i-steam"/></svg></div>
+            <img class="cc-img" src="steam.png?v=1" alt="Steam" />
             <h3>Привязать Steam</h3>
             <p id="steamCardText">Для проверки часов в игре, VAC-статуса и аватарки в профиле.</p>
             <button class="btn btn-ghost full" id="steamLinkBtn">
-              <svg class="ic"><use href="#i-steam"/></svg> Привязать Steam
+              <img class="btn-steam" src="steam.png?v=1" alt="" /> Привязать Steam
             </button>
           </article>
 
@@ -415,43 +414,41 @@
             <span class="badge">BETA</span>
           </div>
 
-          <p class="detail-hint">
-            <b>SteamID</b> подставляется автоматически из привязанного Steam — вводить не нужно.
-            Остаётся <b>IP</b>, <b>порт</b> и <b>Player Token</b> (его выдаёт игра при нажатии «Pair with server» в меню Rust+ внутри Rust — это единственное, что должен сделать сам Facepunch, обойти нельзя).
-          </p>
-          <p class="detail-hint" id="rpSteamNote"></p>
+          <div id="rpStatus" class="rp-status"></div>
 
-          <form id="rpForm" class="form">
-            <div class="rp-grid">
-              <label class="field"><span>Название</span>
-                <div class="input"><svg class="ic"><use href="#i-server"/></svg>
-                  <input name="name" type="text" placeholder="Мой сервер" /></div>
+          <div id="rpConnected" hidden>
+            <p class="detail-hint">Rust+ подключён. Заходи в игру → Rust+ → <b>Pair with server</b> — серверы появятся ниже сами.<br>⏳ Токен из расширения живёт ~<b>14 дней</b>. Если серверы перестали обновляться — получи новый токен в расширении и нажми «Перепривязать».</p>
+            <button class="btn btn-ghost btn-sm" id="rpRelink">Перепривязать</button>
+          </div>
+
+          <div id="rpSetup">
+            <ol class="rp-steps">
+              <li>Поставь расширение <b><a href="https://chromewebstore.google.com/detail/rustplusplus-credential-a/ooahmkklkanfgfmphpknpcgdpdcoikhe" target="_blank" rel="noopener">rustPlusPlus Credential Application</a></b> и войди через Steam — оно сделает всё за тебя.</li>
+              <li>Скопируй выданные <b>credentials</b> и вставь их ниже — один раз.</li>
+              <li>Зайди в игру → меню Rust+ → <b>Pair with server</b>. Сервер появится тут <b>сам</b>.</li>
+            </ol>
+            <p class="detail-hint">Расширение работает у тебя в браузере — данные Steam никуда не передаются, к нам приходят только FCM-креды для приёма пейрингов.</p>
+
+            <form id="rpForm" class="form">
+              <label class="field"><span>Credentials</span>
+                <textarea id="rpCreds" class="rp-textarea" placeholder="Вставь строку из расширения целиком, напр.:&#10;/credentials add gcm_android_id:123... gcm_security_token:456... steam_id:7656..."></textarea>
               </label>
-              <label class="field"><span>IP</span>
-                <div class="input"><svg class="ic"><use href="#i-pin"/></svg>
-                  <input name="ip" type="text" placeholder="128.0.0.1" /></div>
-              </label>
-              <label class="field"><span>Порт</span>
-                <div class="input"><svg class="ic"><use href="#i-link"/></svg>
-                  <input name="port" type="number" placeholder="28082" /></div>
-              </label>
-              <label class="field"><span>SteamID64</span>
-                <div class="input"><svg class="ic"><use href="#i-steam"/></svg>
-                  <input name="steamId" type="text" placeholder="7656119..." /></div>
-              </label>
-              <label class="field rp-wide"><span>Player Token</span>
-                <div class="input"><svg class="ic"><use href="#i-lock"/></svg>
-                  <input name="token" type="number" placeholder="Число из игры" /></div>
-              </label>
-            </div>
-            <p class="form-err" id="rpErr"></p>
-            <p class="form-ok" id="rpOk"></p>
-            <button class="btn btn-primary btn-lg full" type="submit" id="rpBtn">Сохранить сервер</button>
-          </form>
+              <p class="form-err" id="rpErr"></p>
+              <p class="form-ok" id="rpOk"></p>
+              <button class="btn btn-primary btn-lg full" type="submit" id="rpBtn">Подключить Rust+</button>
+            </form>
+          </div>
         </div>
 
         <h3 class="d-players-title">Подключённые серверы</h3>
         <div id="rpList" class="bm-results"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="rpserver">
+      <div class="checker">
+        <button class="link-back" data-go="rustplus"><svg class="ic"><use href="#i-back"/></svg> К Rust+</button>
+        <div id="rpServerDetail"></div>
       </div>
     </section>
 
@@ -460,6 +457,26 @@
         <div class="checker-head"><h2>Отслеживаемые игроки</h2></div>
         <p class="detail-hint">Список игроков, за которыми ты следишь. Открой профиль, чтобы посмотреть, где играет, или удали из отслеживания.</p>
         <div id="trackedList" class="bm-results"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="lookup">
+      <div class="checker">
+        <div class="checker-head"><h2>Статистика игрока</h2></div>
+        <p class="detail-hint">Введи SteamID64 или ссылку на профиль Steam — покажем ник, аватар и всю статистику Rust. Доступно на Premium/Unlimited.</p>
+        <form id="lookupForm" class="bm-search">
+          <div class="input">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="lookupInput" type="text" placeholder="7656119… или steamcommunity.com/id/nick" autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" type="submit">Показать</button>
+        </form>
+        <p class="form-err" id="lookupErr"></p>
+        <div class="detail-card" id="lookupCard" hidden>
+          <div class="presence-head" id="lookupHead"></div>
+          <div class="detail-grid" id="lookupGrid"></div>
+          <p class="detail-hint" id="lookupHint"></p>
+        </div>
       </div>
     </section>
 
@@ -509,7 +526,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=33"></script>
-  <script src="app.js?v=33"></script>
+  <script src="config.js?v=48"></script>
+  <script src="app.js?v=48"></script>
 </body>
 </html>

@@ -6,6 +6,8 @@ function showView(name) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   try { sessionStorage.setItem('rc_view', name); } catch {}
+  const nf = $('#navFeatures');
+  if (nf) nf.style.display = name === 'landing' ? '' : 'none';
 }
 
 let loggedIn = false;
@@ -25,6 +27,23 @@ document.addEventListener('click', e => {
   if (target === 'tracked') loadTracked();
 });
 
+document.addEventListener('click', e => {
+  const card = e.target.closest('.feat-link');
+  if (!card) return;
+  const feat = card.dataset.feat;
+  if (!loggedIn) { setAuthMode('register'); showView('register'); return; }
+  if (feat === 'lookup') {
+    const tier = currentProfile && currentProfile.tier;
+    if (tier !== 'premium' && tier !== 'unlimited') {
+      showView('subscription');
+      return;
+    }
+    showView('lookup');
+    return;
+  }
+  showView(feat);
+});
+
 window.addEventListener('load', async () => {
   startCounters();
 
@@ -32,7 +51,7 @@ window.addEventListener('load', async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
       const info = await loadProfile();
-      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); }
+      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
     }
   }
 
@@ -40,7 +59,7 @@ window.addEventListener('load', async () => {
 
   let saved = 'landing';
   try { saved = sessionStorage.getItem('rc_view') || 'landing'; } catch {}
-  const gated = ['profile', 'subscription', 'checker', 'tracked'];
+  const gated = ['profile', 'subscription', 'checker', 'tracked', 'lookup', 'rustplus'];
   const safe = ['landing', 'privacy', 'register'];
   if (gated.includes(saved)) showView(loggedIn ? saved : 'landing');
   else if (safe.includes(saved)) showView(saved);
@@ -116,10 +135,7 @@ $('#registerForm').addEventListener('submit', async e => {
         password: data.password,
         username: data.nick
       };
-      const { data: res, error } = await sb.functions.invoke('send-otp', {
-        body: { email: pendingSignup.email }
-      });
-      if (error) throw new Error('fn:' + error.message);
+      const res = await otpCall('send-otp', { email: pendingSignup.email });
       if (res && res.ok === false) {
         if (res.detail) console.warn('[send-otp] detail:', res.detail);
         throw new Error(sendOtpError(res.error));
@@ -199,13 +215,10 @@ $('#verifyForm').addEventListener('submit', async e => {
   const label = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = 'Проверяем…';
   try {
-    const { data: res, error } = await sb.functions.invoke('verify-otp', {
-      body: {
-        email: pendingSignup.email, code,
-        password: pendingSignup.password, username: pendingSignup.username
-      }
+    const res = await otpCall('verify-otp', {
+      email: pendingSignup.email, code,
+      password: pendingSignup.password, username: pendingSignup.username
     });
-    if (error) throw new Error('fn:' + error.message);
     if (!res || res.ok !== true) throw new Error((res && res.error) || 'verify_failed');
 
     const { error: sErr } = await sb.auth.signInWithPassword({
@@ -229,10 +242,7 @@ $('#resendBtn').addEventListener('click', async e => {
   const link = e.target;
   link.textContent = 'Отправляем…';
   try {
-    const { data: res, error } = await sb.functions.invoke('send-otp', {
-      body: { email: pendingSignup.email }
-    });
-    if (error) throw new Error(error.message);
+    const res = await otpCall('send-otp', { email: pendingSignup.email });
     if (res && res.ok === false) throw new Error(res.error);
     $('#verifyOk').textContent = 'Новый код отправлен.';
   } catch (err) {
@@ -252,6 +262,21 @@ function translateOtpError(msg = '') {
   if (/create_failed|already/.test(msg)) return 'Такой email уже зарегистрирован — войди.';
   if (/^fn:/.test(msg)) return 'Функция недоступна — задеплой send-otp/verify-otp.';
   return msg || 'Ошибка проверки кода.';
+}
+
+async function otpCall(action, body) {
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (worker) {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/' + action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return r.json();
+  }
+  const { data, error } = await sb.functions.invoke(action, { body });
+  if (error) throw new Error('fn:' + error.message);
+  return data;
 }
 
 function sendOtpError(code = '') {
@@ -383,6 +408,37 @@ async function loadStats(profile) {
   }
 }
 
+$('#lookupForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const grid = $('#lookupGrid'), hint = $('#lookupHint'), err = $('#lookupErr'), card = $('#lookupCard'), head = $('#lookupHead');
+  err.textContent = ''; grid.innerHTML = ''; head.innerHTML = '';
+  const q = $('#lookupInput').value.trim();
+  if (!q) return;
+  if (!sb) { err.textContent = 'Supabase не настроен.'; return; }
+
+  card.hidden = false;
+  hint.textContent = 'Ищем игрока в Steam…';
+  try {
+    const { data, error } = await sb.functions.invoke('steam-stats', { body: { steamId: q } });
+    if (error) throw new Error(error.message);
+    if (!data.ok) {
+      card.hidden = true;
+      if (data.error === 'need_premium') { err.innerHTML = 'Просмотр чужой статистики доступен на <b>Premium</b>/<b>Unlimited</b>. Оформи в разделе «Подписка».'; return; }
+      if (data.error === 'not_found') { err.textContent = 'Игрок не найден. Проверь SteamID или ссылку.'; return; }
+      throw new Error(data.error);
+    }
+    head.innerHTML = `
+      ${data.avatar ? `<img class="presence-av" src="${esc(data.avatar)}" alt="">` : ''}
+      <div><h2>${esc(data.name || 'Игрок')}</h2>
+        <div class="bm-sub"><a class="badge badge-link" href="https://steamcommunity.com/profiles/${esc(data.steamId || '')}" target="_blank" rel="noopener">Профиль Steam ↗</a></div></div>`;
+    if (!data.hasStats) { grid.innerHTML = ''; hint.textContent = '«Сведения об игре» в Steam закрыты — статистика недоступна.'; return; }
+    renderStatsGrid(grid, data);
+    hint.textContent = 'Данные из Steam — официальная статистика Rust.';
+  } catch (e2) {
+    card.hidden = true; err.textContent = 'Ошибка: ' + (e2.message || e2);
+  }
+});
+
 function renderStatsGrid(grid, data) {
   const num = v => v == null ? '—' : Number(v).toLocaleString('ru-RU');
   const tiles = [['Часы в игре', num(data.hours)], ['K/D', data.kd == null ? '—' : data.kd]];
@@ -460,7 +516,7 @@ function renderTelegram(profile) {
 
 async function afterLogin() {
   const info = await loadProfile();
-  if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); }
+  if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
   showView('profile');
 }
 
@@ -505,7 +561,7 @@ if (sb) {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (session) {
       const info = await loadProfile();
-      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); }
+      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
     } else {
       updateNav(null);
     }
@@ -598,7 +654,7 @@ function renderSteam(profile) {
     btn.innerHTML = '<svg class="ic"><use href="#i-check"/></svg> Перепривязать';
   } else {
     txt.textContent = 'Для проверки часов в игре, VAC-статуса и аватарки в профиле.';
-    btn.innerHTML = '<svg class="ic"><use href="#i-steam"/></svg> Привязать Steam';
+    btn.innerHTML = '<img class="btn-steam" src="steam.png?v=1" alt=""> Привязать Steam';
   }
 }
 
@@ -607,14 +663,27 @@ $('#steamLinkBtn').addEventListener('click', async () => {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { setAuthMode('login'); showView('register'); return; }
 
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
   const btn = $('#steamLinkBtn');
   btn.disabled = true;
   btn.innerHTML = 'Переходим в Steam…';
   try {
-    const { data: res, error } = await sb.functions.invoke('steam-login', { body: {} });
-    if (error) throw new Error(error.message);
-    if (!res || !res.ok) throw new Error(res && res.error);
-    window.location.href = res.url;
+    let url;
+    if (worker) {
+      const r = await fetch(worker.replace(/\/$/, '') + '/api/steam/login', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'error');
+      url = j.url;
+    } else {
+      const { data: res, error } = await sb.functions.invoke('steam-login', { body: {} });
+      if (error) throw new Error(error.message);
+      if (!res || !res.ok) throw new Error(res && res.error);
+      url = res.url;
+    }
+    window.location.href = url;
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<svg class="ic"><use href="#i-steam"/></svg> Привязать Steam';
@@ -626,15 +695,51 @@ function handleSteamReturn() {
   const h = location.hash;
   if (h.includes('steam=ok') || h.includes('steam=fail')) {
     const ok = h.includes('steam=ok');
+    const why = (h.match(/why=([a-z]+)/) || [])[1] || '';
     history.replaceState(null, '', location.pathname);
     showView('profile');
-    if (!ok) setTimeout(() => alert('Привязка Steam не удалась. Попробуй ещё раз.'), 100);
+    if (!ok) {
+      const map = {
+        verify: 'Steam не подтвердил вход (realm/return_to). Попробуй ещё раз.',
+        notoken: 'Сессия привязки истекла — начни заново.',
+        db: 'Нет таблицы steam_link_tokens — прогони SQL.',
+        update: 'Не удалось записать профиль.',
+        steamid: 'Не удалось получить SteamID.',
+      };
+      setTimeout(() => alert('Привязка Steam не удалась. ' + (map[why] || ('Причина: ' + (why || 'неизвестно')))), 100);
+    }
     return true;
   }
   return false;
 }
 
 $('#pairBtn').addEventListener('click', () => openRustPlus());
+
+async function updateRpCard() {
+  const card = $('#rpCard'), title = $('#rpCardTitle'), text = $('#rpCardText'), btn = $('#pairBtn');
+  if (!card) return;
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (!worker || !sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/status', {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    const j = await r.json();
+    if (j.linked) {
+      card.classList.add('done');
+      title.innerHTML = '<span class="status-dot online"></span> Rust+ подключён';
+      text.textContent = 'Серверы, команда, смарт-переключатели и рейд-оповещения.';
+      btn.innerHTML = '<svg class="ic"><use href="#i-bolt"/></svg> Открыть Rust+';
+    } else {
+      card.classList.remove('done');
+      title.textContent = 'Подключить Rust+';
+      text.textContent = 'Свяжи аккаунт с игрой через Rust+, чтобы управлять серверами и устройствами.';
+      btn.innerHTML = '<svg class="ic"><use href="#i-bolt"/></svg> Подключить сейчас';
+    }
+  } catch {}
+}
 
 $('#tgBtn')?.addEventListener('click', async () => {
   const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
@@ -666,51 +771,75 @@ $('#tgBtn')?.addEventListener('click', async () => {
 $('#rpForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   $('#rpErr').textContent = ''; $('#rpOk').textContent = '';
-  if (!sb) { $('#rpErr').textContent = 'Supabase не настроен.'; return; }
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (!worker) { $('#rpErr').textContent = 'Не задан WORKER_URL.'; return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { setAuthMode('login'); showView('register'); return; }
 
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) { setAuthMode('login'); showView('register'); return; }
-
-  const d = Object.fromEntries(new FormData(e.target));
-  const ip = (d.ip || '').trim();
-  const port = parseInt(d.port, 10);
-  const steamId = (d.steamId || '').trim();
-  const token = parseInt(d.token, 10);
-
-  if (!ip || !port || !/^\d{17}$/.test(steamId) || !token) {
-    $('#rpErr').textContent = 'Заполни IP, порт, SteamID64 и Player Token числом.';
-    return;
-  }
+  const raw = $('#rpCreds').value.trim();
+  if (!raw) { $('#rpErr').textContent = 'Вставь credentials из расширения.'; return; }
 
   const btn = $('#rpBtn');
-  btn.disabled = true; btn.textContent = 'Сохраняем…';
+  btn.disabled = true; btn.textContent = 'Подключаем…';
   try {
-    const { error } = await sb.from('rustplus_pairings').upsert({
-      user_id: user.id, ip, port, steam_id: steamId, player_token: token,
-      name: (d.name || '').trim() || `${ip}:${port}`
-    }, { onConflict: 'user_id,ip,port' });
-    if (error) throw error;
-    $('#rpOk').textContent = 'Сервер Rust+ сохранён.';
-    e.target.reset();
-    loadPairings();
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/credentials', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw })
+    });
+    const j = await r.json();
+    if (!j.ok) {
+      if (j.error === 'bad_credentials') throw new Error('не нашёл gcm_android_id / gcm_security_token. Скопируй строку из расширения целиком.');
+      if (/rustplus_fcm|relation|does not exist/i.test(j.error || '')) throw new Error('в базе нет таблицы rustplus_fcm — прогони SQL в Supabase.');
+      throw new Error(j.error || 'error');
+    }
+    $('#rpOk').textContent = 'Rust+ подключён! Теперь в игре нажми «Pair with server» — сервер появится тут сам.';
+    $('#rpCreds').value = '';
+    rpStatus();
   } catch (err) {
-    $('#rpErr').textContent = 'Не удалось сохранить: ' + err.message;
+    $('#rpErr').textContent = 'Не удалось: ' + err.message;
   } finally {
-    btn.disabled = false; btn.textContent = 'Сохранить сервер';
+    btn.disabled = false; btn.textContent = 'Подключить Rust+';
   }
+});
+
+function rpShowSetup(show) {
+  const setup = $('#rpSetup'), conn = $('#rpConnected');
+  if (setup) setup.hidden = !show;
+  if (conn) conn.hidden = show;
+}
+
+async function rpStatus() {
+  const box = $('#rpStatus');
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (!box || !worker) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/status', {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    const j = await r.json();
+    if (j.linked) {
+      box.className = 'rp-status on';
+      box.innerHTML = '<span class="status-dot online"></span> Rust+ подключён — слушаем пейринги.';
+      rpShowSetup(false);
+    } else {
+      box.className = 'rp-status';
+      box.innerHTML = '<span class="status-dot"></span> Rust+ ещё не подключён — вставь credentials ниже.';
+      rpShowSetup(true);
+    }
+  } catch {}
+}
+
+$('#rpRelink')?.addEventListener('click', () => {
+  rpShowSetup(true);
+  $('#rpErr').textContent = ''; $('#rpOk').textContent = '';
 });
 
 async function openRustPlus() {
   showView('rustplus');
-  const sid = document.querySelector('#rpForm input[name="steamId"]');
-  const note = $('#rpSteamNote');
-  if (sid && currentProfile && currentProfile.steam_id) {
-    sid.value = currentProfile.steam_id;
-    sid.readOnly = true;
-    if (note) note.textContent = 'SteamID подставлен из привязанного Steam.';
-  } else if (note) {
-    note.innerHTML = 'Привяжи Steam в профиле — тогда SteamID подставится сам. <a href="#" data-go="profile">Привязать</a>';
-  }
+  rpStatus();
   await loadPairings();
 }
 
@@ -724,18 +853,180 @@ async function loadPairings() {
   if (error) { box.innerHTML = `<div class="bm-empty">${esc(error.message)}</div>`; return; }
   if (!data.length) { box.innerHTML = '<div class="bm-empty">Пока нет подключённых серверов Rust+.</div>'; return; }
   box.innerHTML = data.map(p => `
-    <div class="bm-card">
+    <div class="bm-card rp-item" data-open-rp="${esc(p.id)}" data-rp-name="${esc(p.name)}" style="cursor:pointer">
       <div class="bm-main">
         <div class="bm-name"><span class="status-dot online"></span>${esc(p.name)}</div>
-        <div class="bm-sub"><span class="mono">${esc(p.ip)}:${esc(p.port)}</span></div>
+        <div class="bm-sub"><span class="mono">${esc(p.ip)}:${esc(p.port)}</span>${p.notify_vending ? '<span class="live-tag">🛒 магазы</span>' : ''}</div>
       </div>
       <button class="btn btn-ghost btn-sm" data-del-rp="${esc(p.id)}">Удалить</button>
     </div>`).join('');
   box.querySelectorAll('[data-del-rp]').forEach(b => {
-    b.addEventListener('click', async () => {
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
       await sb.from('rustplus_pairings').delete().eq('id', b.dataset.delRp);
       loadPairings();
     });
+  });
+  box.querySelectorAll('[data-open-rp]').forEach(el => {
+    el.addEventListener('click', () => openRpServer(el.dataset.openRp, el.dataset.rpName));
+  });
+}
+
+async function rpApi(path, opts) {
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(worker.replace(/\/$/, '') + path, {
+    method: (opts && opts.method) || 'GET',
+    headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+    body: opts && opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  return r.json();
+}
+
+async function loadRpDevices(id, team) {
+  const box = $('#rpDevices');
+  if (!box) return;
+  let devices = [];
+  try { const j = await rpApi('/api/rustplus/' + id + '/devices'); if (j.ok) devices = j.devices; } catch {}
+  if (!devices.length) {
+    box.innerHTML = '<div class="bm-empty">Нет устройств. В игре: смарт-переключатель/сигнализация → Rust+ → Pair — появятся тут.</div>';
+    return;
+  }
+  box.innerHTML = devices.map(d => {
+    const isAlarm = d.entity_type === 'alarm' || /alarm|сигнал/i.test(d.name || '');
+    if (isAlarm) {
+      return `<div class="bm-card"><div class="bm-main">
+        <div class="bm-name">🚨 Сигнализация</div>
+        <div class="bm-sub"><span>Рейд-оповещение</span></div>
+      </div>
+      <button class="switch ${d.raid_alert ? 'on' : ''}" data-raid="${esc(d.id)}"><i></i></button></div>`;
+    }
+    const allowed = Array.isArray(d.allowed) ? d.allowed.map(String) : [];
+    const opts = (team || []).map(m =>
+      `<label class="rp-allow"><input type="checkbox" data-sid="${esc(m.steamId)}" ${allowed.includes(String(m.steamId)) ? 'checked' : ''}> ${esc(m.name)}</label>`).join('');
+    return `<div class="dev-card" data-dev="${esc(d.id)}">
+      <div class="dev-top">
+        <div class="bm-name">🔌 ${esc(d.name || 'Переключатель')}</div>
+        <div class="dev-btns">
+          <button class="btn btn-ghost btn-sm" data-tog="1">Вкл</button>
+          <button class="btn btn-ghost btn-sm" data-tog="0">Выкл</button>
+        </div>
+      </div>
+      <label class="field"><span>Команда в чате (без точки)</span>
+        <div class="input"><svg class="ic"><use href="#i-bolt"/></svg>
+          <input class="dev-cmd" type="text" value="${esc(d.command || '')}" placeholder="напр. турели"></div>
+      </label>
+      ${opts ? `<div class="dev-allow-title">Кому разрешить (иначе — только тебе):</div><div class="dev-allow">${opts}</div>` : '<p class="detail-hint">Команда пуста — зайдите в игру, чтобы подтянулась команда для выбора доступа.</p>'}
+      <button class="btn btn-primary btn-sm dev-save">Сохранить команду</button>
+      <span class="dev-ok"></span>
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('[data-raid]').forEach(b => b.addEventListener('click', async () => {
+    const on = !b.classList.contains('on');
+    b.classList.toggle('on', on);
+    await rpApi('/api/rustplus/' + id + '/device', { method: 'POST', body: { deviceId: b.dataset.raid, raid_alert: on } });
+  }));
+  box.querySelectorAll('.dev-card').forEach(card => {
+    const did = card.dataset.dev;
+    card.querySelectorAll('[data-tog]').forEach(b => b.addEventListener('click', () =>
+      rpApi('/api/rustplus/' + id + '/device/toggle', { method: 'POST', body: { deviceId: did, value: b.dataset.tog === '1' } })));
+    card.querySelector('.dev-save').addEventListener('click', async () => {
+      const command = card.querySelector('.dev-cmd').value.trim();
+      const allowed = [...card.querySelectorAll('.dev-allow input:checked')].map(i => i.dataset.sid);
+      const j = await rpApi('/api/rustplus/' + id + '/device', { method: 'POST', body: { deviceId: did, command, allowed } });
+      card.querySelector('.dev-ok').textContent = j.ok ? '✓ сохранено' : 'ошибка';
+    });
+  });
+}
+
+async function openRpServer(id, name) {
+  showView('rpserver');
+  const box = $('#rpServerDetail');
+  box.innerHTML = '<div class="bm-loading">Подключаемся к серверу…</div>';
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  const { data: { session } } = await sb.auth.getSession();
+  try {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id, {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'error');
+    renderRpServer(id, name, j);
+    if (!j.state) setTimeout(() => refreshRpServer(id, name), 4000);
+  } catch (err) {
+    box.innerHTML = `<div class="bm-empty">Не удалось: ${esc(err.message)}</div>`;
+  }
+}
+
+async function refreshRpServer(id, name) {
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  const { data: { session } } = await sb.auth.getSession();
+  try {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id, {
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    const j = await r.json();
+    if (j.ok) renderRpServer(id, name, j);
+  } catch {}
+}
+
+function renderRpServer(id, name, j) {
+  const box = $('#rpServerDetail');
+  const s = j.state;
+  const team = s && s.team ? s.team : [];
+  const vending = s && s.vending ? s.vending : [];
+  const online = team.filter(m => m.online).length;
+
+  const teamRows = team.length
+    ? team.map(m => `<div class="bm-card">
+        <div class="bm-main">
+          <div class="bm-name"><span class="status-dot ${m.online ? 'online' : ''}"></span>${esc(m.name)}${!m.alive ? ' <span class="live-tag" style="color:var(--rust-2);background:rgba(232,102,63,.12);border-color:rgba(232,102,63,.3)">мёртв</span>' : ''}</div>
+          <div class="bm-sub"><span>${m.online ? 'в сети' : 'офлайн'}</span><span>кв. ${esc(m.grid)}</span></div>
+        </div>
+      </div>`).join('')
+    : '<div class="bm-empty">Команда пуста или сервер ещё грузится.</div>';
+
+  box.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-top">
+        <h2><svg class="ic"><use href="#i-link"/></svg> ${esc(name)}</h2>
+        <span class="badge">${s ? (s.players ?? 0) + '/' + (s.maxPlayers ?? '?') : '…'}</span>
+      </div>
+
+      <div class="rp-toggle">
+        <div>
+          <b>Уведомления о магазинах</b>
+          <p>Когда на карте появляется вендинг — бот пишет в игровой чат «🛒 На квадрате X появился магазин».</p>
+        </div>
+        <button class="switch ${j.notifyVending ? 'on' : ''}" id="rpVendBtn" data-id="${esc(id)}"><i></i></button>
+      </div>
+
+      <h3 class="d-players-title">Команда · ${team.length} чел. (${online} онлайн)</h3>
+      <div class="bm-results">${teamRows}</div>
+
+      <h3 class="d-players-title">Смарт-устройства и команды</h3>
+      <div id="rpDevices" class="bm-results"><div class="bm-loading">Загружаем…</div></div>
+
+      <h3 class="d-players-title">Магазины на карте · ${vending.length}</h3>
+      <div class="rp-vending">${vending.length ? vending.map(v => `<span class="pchip">🛒 ${esc(v.grid)}</span>`).join('') : '<div class="bm-empty">Магазинов не видно (сервер может их не транслировать).</div>'}</div>
+    </div>`;
+
+  loadRpDevices(id, team);
+
+  $('#rpVendBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const enabled = !btn.classList.contains('on');
+    btn.classList.toggle('on', enabled);
+    const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+    const { data: { session } } = await sb.auth.getSession();
+    try {
+      await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id + '/vending', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+    } catch { btn.classList.toggle('on', !enabled); }
   });
 }
 
