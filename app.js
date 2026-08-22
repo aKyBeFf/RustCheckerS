@@ -12,6 +12,44 @@ function showView(name) {
 
 let loggedIn = false;
 
+// Красивое модальное подтверждение вместо window.confirm(). Возвращает Promise<boolean>.
+function confirmDialog({ title = 'Подтверждение', text = '', okText = 'Подтвердить', cancelText = 'Отмена', danger = false } = {}) {
+  return new Promise(resolve => {
+    const back = $('#confirmModal');
+    const modal = back && back.querySelector('.modal');
+    if (!back || !modal) { resolve(window.confirm(text || title)); return; }
+
+    $('#confirmTitle').textContent = title;
+    $('#confirmText').textContent = text;
+    $('#confirmOk').textContent = okText;
+    $('#confirmCancel').textContent = cancelText;
+    modal.classList.toggle('danger', !!danger);
+
+    const ok = $('#confirmOk'), cancel = $('#confirmCancel');
+    const close = (val) => {
+      back.classList.remove('open');
+      back.setAttribute('aria-hidden', 'true');
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      back.removeEventListener('click', onBack);
+      document.removeEventListener('keydown', onKey);
+      resolve(val);
+    };
+    const onOk = () => close(true);
+    const onCancel = () => close(false);
+    const onBack = (e) => { if (e.target === back) close(false); };
+    const onKey = (e) => { if (e.key === 'Escape') close(false); else if (e.key === 'Enter') close(true); };
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    back.addEventListener('click', onBack);
+    document.addEventListener('keydown', onKey);
+
+    back.setAttribute('aria-hidden', 'false');
+    back.classList.add('open');
+    ok.focus();
+  });
+}
+
 document.addEventListener('click', e => {
   const trigger = e.target.closest('[data-go]');
   if (!trigger) return;
@@ -44,6 +82,23 @@ document.addEventListener('click', e => {
   showView(feat);
 });
 
+// Прогоняем все рендеры профиля так, чтобы падение одного не срывало остальные
+// (иначе ошибка в renderPlan/renderTelegram молча блокировала loadStats и updateRpCard).
+function renderProfileAll(profile) {
+  const steps = [
+    () => renderTier(profile),
+    () => updateNav(profile),
+    () => renderSteam(profile),
+    () => renderTelegram(profile),
+    () => renderPlan(profile),
+    () => loadStats(profile),
+    () => updateRpCard(),
+  ];
+  for (const step of steps) {
+    try { step(); } catch (e) { console.error('[renderProfileAll]', e); }
+  }
+}
+
 window.addEventListener('load', async () => {
   startCounters();
 
@@ -51,7 +106,7 @@ window.addEventListener('load', async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
       const info = await loadProfile();
-      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
+      if (info) renderProfileAll(info.profile);
     }
   }
 
@@ -72,7 +127,7 @@ let sb = null;
 if (configured && window.supabase) {
   sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
 } else {
-  console.warn('[RustChecker] Supabase не настроен — впиши SUPABASE_URL в config.js');
+  console.warn('[RustChecker] Supabase не настроен - впиши SUPABASE_URL в config.js');
 }
 
 let authMode = 'register';
@@ -254,13 +309,13 @@ $('#resendBtn').addEventListener('click', async e => {
 
 function translateOtpError(msg = '') {
   if (/wrong_code/.test(msg)) return 'Неверный код.';
-  if (/expired/.test(msg)) return 'Код истёк — запроси новый.';
-  if (/too_many/.test(msg)) return 'Слишком много попыток — запроси новый код.';
-  if (/no_code/.test(msg)) return 'Код не найден — отправь заново.';
+  if (/expired/.test(msg)) return 'Код истёк - запроси новый.';
+  if (/too_many/.test(msg)) return 'Слишком много попыток - запроси новый код.';
+  if (/no_code/.test(msg)) return 'Код не найден - отправь заново.';
   if (/mail_failed/.test(msg)) return 'Не удалось отправить письмо (проверь RESEND_API_KEY).';
-  if (/username_taken/.test(msg)) return 'Такой логин уже занят — придумай другой.';
-  if (/create_failed|already/.test(msg)) return 'Такой email уже зарегистрирован — войди.';
-  if (/^fn:/.test(msg)) return 'Функция недоступна — задеплой send-otp/verify-otp.';
+  if (/username_taken/.test(msg)) return 'Такой логин уже занят - придумай другой.';
+  if (/create_failed|already/.test(msg)) return 'Такой email уже зарегистрирован - войди.';
+  if (/^fn:/.test(msg)) return 'Функция недоступна - задеплой send-otp/verify-otp.';
   return msg || 'Ошибка проверки кода.';
 }
 
@@ -281,9 +336,9 @@ async function otpCall(action, body) {
 
 function sendOtpError(code = '') {
   if (code === 'mail_failed')
-    return 'Письмо не отправилось — проверь домен в Resend и OTP_FROM (детали в консоли F12).';
+    return 'Письмо не отправилось - проверь домен в Resend и OTP_FROM (детали в консоли F12).';
   if (code === 'db_failed')
-    return 'Нет таблицы email_otps — прогони SQL в Supabase.';
+    return 'Нет таблицы email_otps - прогони SQL в Supabase.';
   if (code === 'email_required') return 'Укажи email.';
   return code || 'Не удалось отправить код.';
 }
@@ -291,7 +346,7 @@ function sendOtpError(code = '') {
 function translateAuthError(msg = '') {
   if (/already registered/i.test(msg)) return 'Такой email уже зарегистрирован.';
   if (/Invalid login/i.test(msg)) return 'Неверный логин или пароль.';
-  if (/Email not confirmed/i.test(msg)) return 'Email не подтверждён — проверь почту.';
+  if (/Email not confirmed/i.test(msg)) return 'Email не подтверждён - проверь почту.';
   return msg || 'Ошибка. Попробуй ещё раз.';
 }
 
@@ -392,16 +447,16 @@ async function loadStats(profile) {
     if (data.debug) console.warn('[steam-stats]', data.debug);
     if (!data.hasStats) {
       grid.innerHTML = '';
-      hint.textContent = 'Статистика скрыта — открой в Steam приватность → «Сведения об игре» → Публично.';
+      hint.textContent = 'Статистика скрыта - открой в Steam приватность → «Сведения об игре» → Публично.';
       return;
     }
 
     renderStatsGrid(grid, data);
     if (data.cached) {
       const d = data.updatedAt ? new Date(data.updatedAt).toLocaleDateString('ru-RU') : '';
-      hint.textContent = `Профиль Steam закрыт — показаны сохранённые данные${d ? ' от ' + d : ''}. Открой «Сведения об игре», чтобы обновить.`;
+      hint.textContent = `Профиль Steam закрыт - показаны сохранённые данные${d ? ' от ' + d : ''}. Открой «Сведения об игре», чтобы обновить.`;
     } else {
-      hint.textContent = 'Данные из Steam — официальная статистика Rust.';
+      hint.textContent = 'Данные из Steam - официальная статистика Rust.';
     }
   } catch (err) {
     hint.textContent = 'Не удалось загрузить статистику: ' + (err.message || err);
@@ -431,17 +486,17 @@ $('#lookupForm')?.addEventListener('submit', async e => {
       ${data.avatar ? `<img class="presence-av" src="${esc(data.avatar)}" alt="">` : ''}
       <div><h2>${esc(data.name || 'Игрок')}</h2>
         <div class="bm-sub"><a class="badge badge-link" href="https://steamcommunity.com/profiles/${esc(data.steamId || '')}" target="_blank" rel="noopener">Профиль Steam ↗</a></div></div>`;
-    if (!data.hasStats) { grid.innerHTML = ''; hint.textContent = '«Сведения об игре» в Steam закрыты — статистика недоступна.'; return; }
+    if (!data.hasStats) { grid.innerHTML = ''; hint.textContent = '«Сведения об игре» в Steam закрыты - статистика недоступна.'; return; }
     renderStatsGrid(grid, data);
-    hint.textContent = 'Данные из Steam — официальная статистика Rust.';
+    hint.textContent = 'Данные из Steam - официальная статистика Rust.';
   } catch (e2) {
     card.hidden = true; err.textContent = 'Ошибка: ' + (e2.message || e2);
   }
 });
 
 function renderStatsGrid(grid, data) {
-  const num = v => v == null ? '—' : Number(v).toLocaleString('ru-RU');
-  const tiles = [['Часы в игре', num(data.hours)], ['K/D', data.kd == null ? '—' : data.kd]];
+  const num = v => v == null ? '-' : Number(v).toLocaleString('ru-RU');
+  const tiles = [['Часы в игре', num(data.hours)], ['K/D', data.kd == null ? '-' : data.kd]];
   const all = data.all || {};
   const order = ['kill_player', 'deaths', 'headshot', 'wounded',
     'harvested_wood', 'harvested_stones', 'acquired_metal.ore', 'harvested_cloth',
@@ -463,7 +518,8 @@ function renderPlan(profile) {
   if (planTimer) { clearInterval(planTimer); planTimer = null; }
 
   const tier = (profile.tier || 'free');
-  const until = profile.premium_until ? new Date(profile.premium_until) : null;
+  const rawUntil = profile.premium_until ? new Date(profile.premium_until) : null;
+  const until = (rawUntil && !isNaN(rawUntil.getTime())) ? rawUntil : null;
   const expired = until && until.getTime() < Date.now();
   const active = tier !== 'free' && !expired;
 
@@ -478,6 +534,16 @@ function renderPlan(profile) {
   if (expired) {
     el.innerHTML = `<div class="ps-row"><span class="tier-badge free">ИСТЁК</span>
       <span class="ps-text">Подписка ${tier.toUpperCase()} закончилась. Продли, чтобы вернуть возможности.</span></div>`;
+    return;
+  }
+
+  // Тариф активен, но без даты окончания (напр. Unlimited/бессрочно или ключ без срока) -
+  // показываем статус без обратного отсчёта, чтобы не падать на until.getTime().
+  if (!until) {
+    el.innerHTML = `<div class="ps-row">
+        <span class="tier-badge ${tier}">${tier.toUpperCase()}</span>
+        <span class="ps-text">Тариф активен · без ограничения по времени.</span>
+      </div>`;
     return;
   }
 
@@ -505,18 +571,23 @@ function renderPlan(profile) {
 
 function renderTelegram(profile) {
   const txt = $('#tgText');
-  const btn = $('#tgBtn');
-  if (!txt || !btn) return;
-  if (profile && profile.telegram_chat_id) {
+  const byCode = $('#tgByCode');
+  const unlink = $('#tgUnlinkBtn');
+  if (!txt) return;
+  const linked = profile && profile.telegram_chat_id;
+  if (byCode) byCode.style.display = linked ? 'none' : '';
+  if (unlink) unlink.style.display = linked ? '' : 'none';
+  if (linked) {
     const uname = profile.telegram_username ? '@' + profile.telegram_username : 'привязан';
-    txt.innerHTML = `Telegram привязан: <b>${esc(uname)}</b>. Уведомления включены.`;
-    btn.innerHTML = '<svg class="ic"><use href="#i-check"/></svg> Перепривязать';
+    txt.innerHTML = `✅ Telegram привязан: <b>${esc(uname)}</b>. Уведомления включены.`;
+  } else {
+    txt.textContent = 'Привяжи Telegram, чтобы получать сообщения, когда отслеживаемый игрок зашёл или вышел с сервера.';
   }
 }
 
 async function afterLogin() {
   const info = await loadProfile();
-  if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
+  if (info) renderProfileAll(info.profile);
   showView('profile');
 }
 
@@ -561,7 +632,7 @@ if (sb) {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (session) {
       const info = await loadProfile();
-      if (info) { renderTier(info.profile); updateNav(info.profile); renderSteam(info.profile); renderTelegram(info.profile); renderPlan(info.profile); loadStats(info.profile); updateRpCard(); }
+      if (info) renderProfileAll(info.profile);
     } else {
       updateNav(null);
     }
@@ -625,7 +696,7 @@ document.querySelectorAll('[data-buy]').forEach(btn => {
       });
       const j = await r.json();
       if (!j.ok) {
-        if (j.error === 'no_telegram') buyNotice('err', 'Нужен Telegram', 'Сначала привяжи Telegram в профиле — счёт придёт туда.');
+        if (j.error === 'no_telegram') buyNotice('err', 'Нужен Telegram', 'Сначала привяжи Telegram в профиле - счёт придёт туда.');
         else throw new Error(j.detail || j.error || 'error');
       } else {
         buyNotice('ok', 'Счёт отправлен в Telegram ⭐', 'Открой чат с ботом и оплати звёздами. После оплаты тариф активируется автоматически.');
@@ -701,8 +772,8 @@ function handleSteamReturn() {
     if (!ok) {
       const map = {
         verify: 'Steam не подтвердил вход (realm/return_to). Попробуй ещё раз.',
-        notoken: 'Сессия привязки истекла — начни заново.',
-        db: 'Нет таблицы steam_link_tokens — прогони SQL.',
+        notoken: 'Сессия привязки истекла - начни заново.',
+        db: 'Нет таблицы steam_link_tokens - прогони SQL.',
         update: 'Не удалось записать профиль.',
         steamid: 'Не удалось получить SteamID.',
       };
@@ -741,30 +812,84 @@ async function updateRpCard() {
   } catch {}
 }
 
-$('#tgBtn')?.addEventListener('click', async () => {
+// Реверс-привязка: код сгенерил бот, вводим его тут
+$('#tgCodeBtn')?.addEventListener('click', async () => {
+  const err = $('#tgCodeErr');
+  if (err) err.textContent = '';
   const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
-  if (!worker) { alert('Сначала укажи WORKER_URL в config.js (адрес Node-сервиса на Render).'); return; }
+  if (!worker) { if (err) err.textContent = 'Не задан WORKER_URL.'; return; }
   if (!sb) return;
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { setAuthMode('login'); showView('register'); return; }
 
-  const btn = $('#tgBtn');
-  btn.disabled = true; btn.textContent = 'Получаем код…';
+  const code = ($('#tgCodeInput').value || '').trim().toUpperCase();
+  if (!code) { if (err) err.textContent = 'Введи код из бота.'; return; }
+
+  const btn = $('#tgCodeBtn');
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = 'Привязываем…';
   try {
-    const r = await fetch(worker.replace(/\/$/, '') + '/api/telegram/link', {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/telegram/link-by-code', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const j = await r.json();
+    if (!j.ok) {
+      const map = {
+        not_found: 'Код не найден. Сгенерируй новый в боте.',
+        expired: 'Код устарел. Возьми новый в боте.',
+        no_code: 'Введи код.',
+        auth: 'Сначала войди в аккаунт.',
+      };
+      throw new Error(map[j.error] || j.error || 'error');
+    }
+    $('#tgCodeInput').value = '';
+    const info = await loadProfile();
+    if (info) renderProfileAll(info.profile);
+  } catch (e2) {
+    if (err) err.textContent = 'Не удалось: ' + (e2.message || e2);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+});
+
+// Отвязать Telegram
+$('#tgUnlinkBtn')?.addEventListener('click', async () => {
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (!worker) { alert('Не задан WORKER_URL.'); return; }
+  if (!sb) return;
+  const confirmed = await confirmDialog({
+    title: 'Отвязать Telegram?',
+    text: 'Уведомления перестанут приходить. Привязать заново можно в любой момент.',
+    okText: 'Отвязать',
+    cancelText: 'Отмена',
+    danger: true,
+  });
+  if (!confirmed) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { setAuthMode('login'); showView('register'); return; }
+
+  const btn = $('#tgUnlinkBtn');
+  btn.disabled = true;
+  const old = btn.innerHTML;
+  btn.textContent = 'Отвязываем…';
+  try {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/telegram/unlink', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
     });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'error');
-    const botName = j.bot ? '@' + j.bot : 'нашему боту';
-    $('#tgText').innerHTML = `Отправь этот код ${esc(botName)} в Telegram:<br><span class="tg-code">${esc(j.code)}</span>`;
+    const info = await loadProfile();
+    if (info) renderProfileAll(info.profile);
+  } catch (e2) {
+    alert('Не удалось отвязать: ' + (e2.message || e2));
+  } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg class="ic"><use href="#i-radar"/></svg> Обновить код';
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = '<svg class="ic"><use href="#i-radar"/></svg> Привязать Telegram';
-    alert('Не удалось: ' + err.message);
+    btn.innerHTML = old;
   }
 });
 
@@ -790,10 +915,10 @@ $('#rpForm')?.addEventListener('submit', async e => {
     const j = await r.json();
     if (!j.ok) {
       if (j.error === 'bad_credentials') throw new Error('не нашёл gcm_android_id / gcm_security_token. Скопируй строку из расширения целиком.');
-      if (/rustplus_fcm|relation|does not exist/i.test(j.error || '')) throw new Error('в базе нет таблицы rustplus_fcm — прогони SQL в Supabase.');
+      if (/rustplus_fcm|relation|does not exist/i.test(j.error || '')) throw new Error('в базе нет таблицы rustplus_fcm - прогони SQL в Supabase.');
       throw new Error(j.error || 'error');
     }
-    $('#rpOk').textContent = 'Rust+ подключён! Теперь в игре нажми «Pair with server» — сервер появится тут сам.';
+    $('#rpOk').textContent = 'Rust+ подключён! Теперь в игре нажми «Pair with server» - сервер появится тут сам.';
     $('#rpCreds').value = '';
     rpStatus();
   } catch (err) {
@@ -822,11 +947,11 @@ async function rpStatus() {
     const j = await r.json();
     if (j.linked) {
       box.className = 'rp-status on';
-      box.innerHTML = '<span class="status-dot online"></span> Rust+ подключён — слушаем пейринги.';
+      box.innerHTML = '<span class="status-dot online"></span> Rust+ подключён - слушаем пейринги.';
       rpShowSetup(false);
     } else {
       box.className = 'rp-status';
-      box.innerHTML = '<span class="status-dot"></span> Rust+ ещё не подключён — вставь credentials ниже.';
+      box.innerHTML = '<span class="status-dot"></span> Rust+ ещё не подключён - вставь credentials ниже.';
       rpShowSetup(true);
     }
   } catch {}
@@ -889,7 +1014,7 @@ async function loadRpDevices(id, team) {
   let devices = [];
   try { const j = await rpApi('/api/rustplus/' + id + '/devices'); if (j.ok) devices = j.devices; } catch {}
   if (!devices.length) {
-    box.innerHTML = '<div class="bm-empty">Нет устройств. В игре: смарт-переключатель/сигнализация → Rust+ → Pair — появятся тут.</div>';
+    box.innerHTML = '<div class="bm-empty">Нет устройств. В игре: смарт-переключатель/сигнализация → Rust+ → Pair - появятся тут.</div>';
     return;
   }
   box.innerHTML = devices.map(d => {
@@ -916,7 +1041,7 @@ async function loadRpDevices(id, team) {
         <div class="input"><svg class="ic"><use href="#i-bolt"/></svg>
           <input class="dev-cmd" type="text" value="${esc(d.command || '')}" placeholder="напр. турели"></div>
       </label>
-      ${opts ? `<div class="dev-allow-title">Кому разрешить (иначе — только тебе):</div><div class="dev-allow">${opts}</div>` : '<p class="detail-hint">Команда пуста — зайдите в игру, чтобы подтянулась команда для выбора доступа.</p>'}
+      ${opts ? `<div class="dev-allow-title">Кому разрешить (иначе - только тебе):</div><div class="dev-allow">${opts}</div>` : '<p class="detail-hint">Команда пуста - зайдите в игру, чтобы подтянулась команда для выбора доступа.</p>'}
       <button class="btn btn-primary btn-sm dev-save">Сохранить команду</button>
       <span class="dev-ok"></span>
     </div>`;
@@ -971,6 +1096,13 @@ async function refreshRpServer(id, name) {
   } catch {}
 }
 
+const DEATH_OPTS = [
+  ['off', 'Выключено'],
+  ['tg', 'Только Telegram'],
+  ['game', 'Только в игре'],
+  ['both', 'Telegram + игра'],
+];
+
 function renderRpServer(id, name, j) {
   const box = $('#rpServerDetail');
   const s = j.state;
@@ -997,9 +1129,25 @@ function renderRpServer(id, name, j) {
       <div class="rp-toggle">
         <div>
           <b>Уведомления о магазинах</b>
-          <p>Когда на карте появляется вендинг — бот пишет в игровой чат «🛒 На квадрате X появился магазин».</p>
+          <p>Когда на карте появляется вендинг - бот пишет в игровой чат «🛒 На квадрате X появился магазин».</p>
         </div>
         <button class="switch ${j.notifyVending ? 'on' : ''}" id="rpVendBtn" data-id="${esc(id)}"><i></i></button>
+      </div>
+
+      <div class="rp-toggle">
+        <div>
+          <b>Оповещения о смертях тиммейтов</b>
+          <p>Когда тиммейт умирает - куда отправлять «{Ник} умер, квадрат: X».</p>
+        </div>
+        <div class="rp-dd" id="rpDeathDD" data-value="${esc(j.deathNotify || 'off')}">
+          <button type="button" class="rp-dd-btn">
+            <span class="rp-dd-label">${esc((DEATH_OPTS.find(o => o[0] === (j.deathNotify || 'off')) || DEATH_OPTS[0])[1])}</span>
+            <svg class="ic rp-dd-chev"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="rp-dd-menu">
+            ${DEATH_OPTS.map(([val, label]) => `<button type="button" class="rp-dd-opt${val === (j.deathNotify || 'off') ? ' active' : ''}" data-val="${val}">${esc(label)}</button>`).join('')}
+          </div>
+        </div>
       </div>
 
       <h3 class="d-players-title">Команда · ${team.length} чел. (${online} онлайн)</h3>
@@ -1028,6 +1176,45 @@ function renderRpServer(id, name, j) {
       });
     } catch { btn.classList.toggle('on', !enabled); }
   });
+
+  const dd = $('#rpDeathDD');
+  if (dd) {
+    const ddBtn = dd.querySelector('.rp-dd-btn');
+    const ddLabel = dd.querySelector('.rp-dd-label');
+    const setActive = (val) => {
+      dd.querySelectorAll('.rp-dd-opt').forEach(o => o.classList.toggle('active', o.dataset.val === val));
+      const opt = dd.querySelector(`.rp-dd-opt[data-val="${val}"]`);
+      if (opt) ddLabel.textContent = opt.textContent;
+      dd.dataset.value = val;
+    };
+    ddBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dd.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('open'); });
+    dd.querySelectorAll('.rp-dd-opt').forEach(opt => {
+      opt.addEventListener('click', async () => {
+        dd.classList.remove('open');
+        const mode = opt.dataset.val;
+        const prev = dd.dataset.value;
+        if (mode === prev) return;
+        setActive(mode); // оптимистично
+        const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+        const { data: { session } } = await sb.auth.getSession();
+        try {
+          const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id + '/death-notify', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode })
+          });
+          const jj = await r.json();
+          if (!jj.ok) throw new Error(jj.error || 'error');
+        } catch {
+          setActive(prev); // откат
+        }
+      });
+    });
+  }
 }
 
 $('#bmForm').addEventListener('submit', async e => {
@@ -1055,7 +1242,7 @@ $('#bmForm').addEventListener('submit', async e => {
   } catch (err) {
     results.innerHTML = '';
     $('#bmErr').textContent = /bm-proxy|fn|Function/i.test(err.message)
-      ? 'Функция bm-proxy недоступна — задеплой её и добавь токен.'
+      ? 'Функция bm-proxy недоступна - задеплой её и добавь токен.'
       : (err.message || 'Ошибка поиска.');
   }
 });
@@ -1066,7 +1253,7 @@ function esc(s) { return String(s ?? '').replace(/[<>&"]/g, c => ({ '<': '&lt;',
 function wipeStr(a) {
   return a?.details?.rust_last_wipe
     ? new Date(a.details.rust_last_wipe).toLocaleDateString('ru-RU')
-    : '—';
+    : '-';
 }
 function mapStr(a) {
   return a?.details?.map || a?.details?.rust_maps?.name || 'Procedural';
@@ -1083,7 +1270,7 @@ function renderServer(s) {
     <div class="bm-main">
       <div class="bm-name"><span class="status-dot ${online ? 'online' : ''}"></span>${esc(a.name)}</div>
       <div class="bm-sub">
-        <span><svg class="ic"><use href="#i-pin"/></svg>${esc(a.country || '—')}</span>
+        <span><svg class="ic"><use href="#i-pin"/></svg>${esc(a.country || '-')}</span>
         <span><svg class="ic"><use href="#i-server"/></svg>${esc(mapStr(a))}</span>
         <span><svg class="ic"><use href="#i-clock"/></svg>вайп: ${wipeStr(a)}</span>
       </div>
@@ -1105,16 +1292,16 @@ async function openServer(id) {
     const srv = res?.data?.data || {};
     const a = srv.attributes || {};
     const online = a.status === 'online';
-    const addr = (a.ip && a.port) ? `${a.ip}:${a.port}` : '—';
+    const addr = (a.ip && a.port) ? `${a.ip}:${a.port}` : '-';
     const players = (res?.data?.included || []).filter(x => x.type === 'player');
 
     const playersBlock = players.length
       ? `<h3 class="d-players-title">Сейчас на сервере · ${players.length}</h3>
          <div class="d-players">${players.map(p =>
             `<button class="pchip" data-pid="${esc(p.id)}" data-pname="${esc(p.attributes?.name || '')}">
-               <svg class="ic"><use href="#i-user"/></svg>${esc(p.attributes?.name || '—')}
+               <svg class="ic"><use href="#i-user"/></svg>${esc(p.attributes?.name || '-')}
              </button>`).join('')}</div>
-         <p class="detail-hint">Нажми на ник — откроется игрок, и его можно отслеживать именно на этом сервере.</p>`
+         <p class="detail-hint">Нажми на ник - откроется игрок, и его можно отслеживать именно на этом сервере.</p>`
       : `<p class="detail-hint">Список игроков этого сервера скрыт (приватность/права). Отследить игрока можно через вкладку «Игроки».</p>`;
 
     box.innerHTML = `
@@ -1126,7 +1313,7 @@ async function openServer(id) {
         <div class="detail-grid">
           <div class="d-metric"><span>Онлайн</span><b>${a.players ?? 0} / ${a.maxPlayers ?? '?'}</b></div>
           <div class="d-metric"><span>Статус</span><b class="${online ? 'ok' : ''}">${online ? 'онлайн' : 'офлайн'}</b></div>
-          <div class="d-metric"><span>Локация</span><b>${esc(a.country || '—')}</b></div>
+          <div class="d-metric"><span>Локация</span><b>${esc(a.country || '-')}</b></div>
           <div class="d-metric"><span>Карта</span><b>${esc(mapStr(a))}</b></div>
           <div class="d-metric"><span>Вайп</span><b>${wipeStr(a)}</b></div>
           <div class="d-metric"><span>Адрес</span><b class="mono">${esc(addr)}</b></div>
@@ -1161,14 +1348,14 @@ async function openPlayer(id, name) {
     const current = servers.find(s => s.meta && s.meta.online);
     const recent = servers.filter(s => s !== current);
 
-    const seenStr = ls => ls ? new Date(ls).toLocaleDateString('ru-RU') : '—';
+    const seenStr = ls => ls ? new Date(ls).toLocaleDateString('ru-RU') : '-';
 
     const currentBlock = current
       ? `<div class="live-now on"><span class="status-dot online"></span> Сейчас играет на <b>${esc(current.attributes?.name || '')}</b></div>
          <div class="bm-card">
            <div class="bm-main">
              <div class="bm-name">${esc(current.attributes?.name)} <span class="live-tag">онлайн</span></div>
-             <div class="bm-sub"><span>${esc(current.attributes?.country || '—')}</span><span>${current.attributes?.players ?? 0}/${current.attributes?.maxPlayers ?? '?'}</span></div>
+             <div class="bm-sub"><span>${esc(current.attributes?.country || '-')}</span><span>${current.attributes?.players ?? 0}/${current.attributes?.maxPlayers ?? '?'}</span></div>
            </div>
            <button class="btn btn-primary btn-sm" data-track-srv="${esc(current.id)}" data-srv-name="${esc(current.attributes?.name)}">
              <svg class="ic"><use href="#i-radar"/></svg> Отслеживать тут
@@ -1182,7 +1369,7 @@ async function openPlayer(id, name) {
           return `<div class="bm-card">
             <div class="bm-main">
               <div class="bm-name">${esc(sa.name)}</div>
-              <div class="bm-sub"><span>${esc(sa.country || '—')}</span><span><svg class="ic"><use href="#i-clock"/></svg> ${seenStr(s.meta?.lastSeen)}</span></div>
+              <div class="bm-sub"><span>${esc(sa.country || '-')}</span><span><svg class="ic"><use href="#i-clock"/></svg> ${seenStr(s.meta?.lastSeen)}</span></div>
             </div>
             <button class="btn btn-ghost btn-sm" data-track-srv="${esc(s.id)}" data-srv-name="${esc(sa.name)}">
               <svg class="ic"><use href="#i-radar"/></svg> Отслеживать тут
@@ -1229,7 +1416,7 @@ async function loadTracked() {
   box.innerHTML = data.map(r => {
     const online = r.last_status === 'online';
     const where = r.server_id === '*'
-      ? (online ? 'по всем серверам · сейчас на ' + esc(r.last_server || '—') : 'по всем серверам · не в игре')
+      ? (online ? 'по всем серверам · сейчас на ' + esc(r.last_server || '-') : 'по всем серверам · не в игре')
       : esc(r.server_name || r.server_id);
     return `<div class="bm-card">
       <div class="bm-main">

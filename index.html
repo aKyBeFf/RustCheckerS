@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rust Checker — статус серверов и игроков</title>
+  <title>Rust Checker - статус серверов и игроков</title>
   <link rel="icon" type="image/png" href="logo.png?v=2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=34" />
+  <link rel="stylesheet" href="styles.css?v=52" />
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -125,7 +125,7 @@
     <div class="nav-user-wrap" id="navUserWrap" style="display:none">
       <button class="nav-user" id="navUser" title="Мой аккаунт">
         <span class="avatar" id="navAvatar"><svg class="ic"><use href="#i-user"/></svg></span>
-        <span class="nav-username" id="navUsername">—</span>
+        <span class="nav-username" id="navUsername">-</span>
         <svg class="ic chev"><use href="#i-chevron"/></svg>
       </button>
       <div class="nav-menu" id="navMenu">
@@ -141,7 +141,7 @@
     <section class="view active" data-view="landing">
       <div class="hero">
         <h1>Проверяй серверы и игроков <span class="grad">за секунды</span></h1>
-        <p class="sub">Статус, онлайн, FPS и время до вайпа — всё в одном месте. Создай аккаунт и подключи Rust+ для управления прямо с сайта.</p>
+        <p class="sub">Статус, онлайн, FPS и время до вайпа - всё в одном месте. Создай аккаунт и подключи Rust+ для управления прямо с сайта.</p>
 
         <div class="cta-row">
           <button class="btn btn-primary btn-lg" data-go="register">
@@ -160,7 +160,7 @@
           <article class="feat reveal feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
             <h3>Отслеживание игроков</h3>
-            <p>Найдите игрока и нажмите «Отследить». Как только человек выйдет из игры — вам придёт сообщение в Telegram.</p>
+            <p>Найдите игрока и нажмите «Отследить». Как только человек выйдет из игры - вам придёт сообщение в Telegram.</p>
           </article>
           <article class="feat reveal feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-server"/></svg></div>
@@ -170,7 +170,7 @@
           <article class="feat reveal feat-link" data-feat="lookup">
             <div class="feat-ic"><svg class="ic"><use href="#i-stats"/></svg></div>
             <h3>Узнать статистику <span class="tag-soon">Premium</span></h3>
-            <p>Сколько наиграли, K/D, сколько ресурсов нафармили и многое другое — по любому игроку.</p>
+            <p>Сколько наиграли, K/D, сколько ресурсов нафармили и многое другое - по любому игроку.</p>
           </article>
           <article class="feat reveal feat-link" data-feat="lookup">
             <div class="feat-ic"><svg class="ic"><use href="#i-history"/></svg></div>
@@ -269,7 +269,7 @@
           <div class="auth-head">
             <span class="brand-mark lg"><svg class="ic"><use href="#i-mail"/></svg></span>
             <h2>Подтверди почту</h2>
-            <p>Мы отправили 6-значный код на <b id="verifyEmail">—</b></p>
+            <p>Мы отправили 6-значный код на <b id="verifyEmail">-</b></p>
           </div>
 
           <form id="verifyForm" class="form" novalidate>
@@ -338,8 +338,17 @@
             <div class="cc-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
             <h3>Уведомления Telegram</h3>
             <p id="tgText">Привяжи Telegram, чтобы получать сообщения, когда отслеживаемый игрок зашёл или вышел с сервера.</p>
-            <button class="btn btn-ghost full" id="tgBtn">
-              <svg class="ic"><use href="#i-radar"/></svg> Привязать Telegram
+            <div class="tg-bycode" id="tgByCode">
+              <p class="tg-bycode-hint">Открой бота, нажми «🔗 Привязать аккаунт» и введи код:</p>
+              <div class="input">
+                <svg class="ic"><use href="#i-link"/></svg>
+                <input id="tgCodeInput" type="text" placeholder="Код из бота" maxlength="6" autocomplete="off" />
+              </div>
+              <button class="btn btn-primary full" id="tgCodeBtn" type="button">Привязать</button>
+              <p class="form-err" id="tgCodeErr"></p>
+            </div>
+            <button class="btn btn-ghost full" id="tgUnlinkBtn" type="button" style="display:none">
+              <svg class="ic"><use href="#i-link"/></svg> Отвязать Telegram
             </button>
           </article>
         </div>
@@ -417,17 +426,17 @@
           <div id="rpStatus" class="rp-status"></div>
 
           <div id="rpConnected" hidden>
-            <p class="detail-hint">Rust+ подключён. Заходи в игру → Rust+ → <b>Pair with server</b> — серверы появятся ниже сами.<br>⏳ Токен из расширения живёт ~<b>14 дней</b>. Если серверы перестали обновляться — получи новый токен в расширении и нажми «Перепривязать».</p>
+            <p class="detail-hint">Rust+ подключён. Заходи в игру → Rust+ → <b>Pair with server</b> - серверы появятся ниже сами.<br>⏳ Токен из расширения живёт ~<b>14 дней</b>. Если серверы перестали обновляться - получи новый токен в расширении и нажми «Перепривязать».</p>
             <button class="btn btn-ghost btn-sm" id="rpRelink">Перепривязать</button>
           </div>
 
           <div id="rpSetup">
             <ol class="rp-steps">
-              <li>Поставь расширение <b><a href="https://chromewebstore.google.com/detail/rustplusplus-credential-a/ooahmkklkanfgfmphpknpcgdpdcoikhe" target="_blank" rel="noopener">rustPlusPlus Credential Application</a></b> и войди через Steam — оно сделает всё за тебя.</li>
-              <li>Скопируй выданные <b>credentials</b> и вставь их ниже — один раз.</li>
+              <li>Поставь расширение <b><a href="https://chromewebstore.google.com/detail/rustplusplus-credential-a/ooahmkklkanfgfmphpknpcgdpdcoikhe" target="_blank" rel="noopener">rustPlusPlus Credential Application</a></b> и войди через Steam - оно сделает всё за тебя.</li>
+              <li>Скопируй выданные <b>credentials</b> и вставь их ниже - один раз.</li>
               <li>Зайди в игру → меню Rust+ → <b>Pair with server</b>. Сервер появится тут <b>сам</b>.</li>
             </ol>
-            <p class="detail-hint">Расширение работает у тебя в браузере — данные Steam никуда не передаются, к нам приходят только FCM-креды для приёма пейрингов.</p>
+            <p class="detail-hint">Расширение работает у тебя в браузере - данные Steam никуда не передаются, к нам приходят только FCM-креды для приёма пейрингов.</p>
 
             <form id="rpForm" class="form">
               <label class="field"><span>Credentials</span>
@@ -463,7 +472,7 @@
     <section class="view" data-view="lookup">
       <div class="checker">
         <div class="checker-head"><h2>Статистика игрока</h2></div>
-        <p class="detail-hint">Введи SteamID64 или ссылку на профиль Steam — покажем ник, аватар и всю статистику Rust. Доступно на Premium/Unlimited.</p>
+        <p class="detail-hint">Введи SteamID64 или ссылку на профиль Steam - покажем ник, аватар и всю статистику Rust. Доступно на Premium/Unlimited.</p>
         <form id="lookupForm" class="bm-search">
           <div class="input">
             <svg class="ic"><use href="#i-search"/></svg>
@@ -486,12 +495,12 @@
         <div class="detail-card">
           <div class="detail-top"><h2>Политика данных</h2></div>
           <div class="policy">
-            <p>RustChecker — сервис для проверки серверов и игроков Rust. Ниже — какие данные мы собираем и зачем.</p>
+            <p>RustChecker - сервис для проверки серверов и игроков Rust. Ниже - какие данные мы собираем и зачем.</p>
             <h3>Что мы храним</h3>
             <ul>
               <li><b>Аккаунт:</b> логин, email и пароль (пароль хранится в зашифрованном виде на стороне Supabase).</li>
-              <li><b>Привязки:</b> SteamID и данные Rust+ паринга, если ты их добавил, — только для работы функций сервиса.</li>
-              <li><b>Telegram:</b> ID чата, если ты привязал бота, — чтобы присылать уведомления.</li>
+              <li><b>Привязки:</b> SteamID и данные Rust+ паринга, если ты их добавил, - только для работы функций сервиса.</li>
+              <li><b>Telegram:</b> ID чата, если ты привязал бота, - чтобы присылать уведомления.</li>
               <li><b>Отслеживания:</b> каких игроков и на каких серверах ты отслеживаешь.</li>
             </ul>
             <h3>Зачем</h3>
@@ -506,7 +515,7 @@
               <li>Не собираем данные, не относящиеся к работе сервиса.</li>
             </ul>
             <h3>Удаление</h3>
-            <p>Ты можешь в любой момент отвязать Steam/Telegram и удалить отслеживания. Для полного удаления аккаунта — напиши нам.</p>
+            <p>Ты можешь в любой момент отвязать Steam/Telegram и удалить отслеживания. Для полного удаления аккаунта - напиши нам.</p>
             <p class="policy-note">Проект никак не связан с Facepunch Studios и Rust. Все товарные знаки принадлежат их владельцам.</p>
           </div>
         </div>
@@ -525,8 +534,20 @@
     </div>
   </footer>
 
+  <div class="modal-backdrop" id="confirmModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal-ic" id="confirmIcon"><svg class="ic"><use href="#i-radar"/></svg></div>
+      <h3 class="modal-title" id="confirmTitle">Подтверждение</h3>
+      <p class="modal-text" id="confirmText"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="confirmCancel" type="button">Отмена</button>
+        <button class="btn btn-primary" id="confirmOk" type="button">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=48"></script>
-  <script src="app.js?v=48"></script>
+  <script src="config.js?v=52"></script>
+  <script src="app.js?v=52"></script>
 </body>
 </html>

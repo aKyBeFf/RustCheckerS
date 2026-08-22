@@ -417,6 +417,9 @@ main{max-width:1160px;margin:0 auto;padding:0 24px 80px}
   user-select:all;
 }
 
+.tg-bycode-hint{font-size:13px;color:var(--muted);margin-bottom:10px}
+.tg-bycode .input{text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+
 
 .tier-badge{
   display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.04em;
@@ -551,6 +554,24 @@ main{max-width:1160px;margin:0 auto;padding:0 24px 80px}
   background:var(--faint);transition:.2s}
 .switch.on{background:linear-gradient(145deg,var(--rust-2),var(--rust));border-color:transparent}
 .switch.on i{left:23px;background:#fff}
+.rp-dd{position:relative;flex:none;min-width:200px}
+.rp-dd-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-family:inherit;font-size:13.5px;font-weight:600;color:var(--txt);
+  background:var(--panel);border:1px solid var(--line-2);border-radius:11px;padding:10px 13px;cursor:pointer;transition:.15s}
+.rp-dd-btn:hover{border-color:rgba(255,255,255,.22);background:var(--panel-2)}
+.rp-dd.open .rp-dd-btn{border-color:var(--rust-2);background:var(--panel-2)}
+.rp-dd-chev{width:15px;height:15px;color:var(--faint);transition:transform .18s}
+.rp-dd.open .rp-dd-chev{transform:rotate(180deg)}
+.rp-dd-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
+  background:var(--panel-2);border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow);
+  padding:6px;display:none}
+.rp-dd.open .rp-dd-menu{display:block;animation:menuDrop .18s ease}
+.rp-dd-opt{width:100%;text-align:left;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--txt);
+  background:none;border:none;cursor:pointer;padding:10px 11px;border-radius:8px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;transition:background .12s}
+.rp-dd-opt:hover{background:var(--panel)}
+.rp-dd-opt.active{color:var(--rust-2)}
+.rp-dd-opt.active::after{content:'✓';font-weight:800}
 .rp-vending{display:flex;flex-wrap:wrap;gap:8px}
 .dev-card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .dev-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -612,4 +633,40 @@ main{max-width:1160px;margin:0 auto;padding:0 24px 80px}
 @media(max-width:520px){
   .stats,.stats.mini,.feat-grid,.connect-grid{grid-template-columns:1fr}
   .cta-row .btn{width:100%;justify-content:center}
+}
+
+/* ── Модальное окно подтверждения ── */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(6,8,9,.62);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .18s ease;
+}
+.modal-backdrop.open{opacity:1;pointer-events:auto}
+.modal{
+  width:100%;max-width:400px;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line-2);border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:26px 24px 22px;text-align:center;
+  transform:translateY(14px) scale(.97);opacity:0;
+  transition:transform .2s cubic-bezier(.2,.9,.3,1),opacity .2s ease;
+}
+.modal-backdrop.open .modal{transform:translateY(0) scale(1);opacity:1}
+.modal-ic{
+  width:52px;height:52px;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:14px;font-size:22px;
+  background:rgba(232,102,63,.12);color:var(--rust-2);
+  border:1px solid rgba(232,102,63,.3);
+}
+.modal.danger .modal-ic{
+  background:rgba(205,65,43,.14);color:var(--rust);border-color:rgba(205,65,43,.4);
+}
+.modal-title{font-size:19px;font-weight:800;margin-bottom:8px}
+.modal-text{font-size:14.5px;color:var(--muted);line-height:1.55;margin-bottom:22px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;justify-content:center}
+.modal.danger #confirmOk{
+  background:linear-gradient(120deg,var(--rust),var(--rust-2));border-color:transparent;
 }
