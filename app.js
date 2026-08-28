@@ -1103,6 +1103,55 @@ const DEATH_OPTS = [
   ['both', 'Telegram + игра'],
 ];
 
+function channelDDHtml(ddId, value) {
+  const v = value || 'off';
+  const label = (DEATH_OPTS.find(o => o[0] === v) || DEATH_OPTS[0])[1];
+  return `<div class="rp-dd" id="${ddId}" data-value="${esc(v)}">
+    <button type="button" class="rp-dd-btn">
+      <span class="rp-dd-label">${esc(label)}</span>
+      <svg class="ic rp-dd-chev"><use href="#i-chevron"/></svg>
+    </button>
+    <div class="rp-dd-menu">
+      ${DEATH_OPTS.map(([val, lbl]) => `<button type="button" class="rp-dd-opt${val === v ? ' active' : ''}" data-val="${val}">${esc(lbl)}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function wireChannelDD(ddId, id, path) {
+  const dd = $('#' + ddId);
+  if (!dd) return;
+  const ddBtn = dd.querySelector('.rp-dd-btn');
+  const ddLabel = dd.querySelector('.rp-dd-label');
+  const setActive = (val) => {
+    dd.querySelectorAll('.rp-dd-opt').forEach(o => o.classList.toggle('active', o.dataset.val === val));
+    const opt = dd.querySelector(`.rp-dd-opt[data-val="${val}"]`);
+    if (opt) ddLabel.textContent = opt.textContent;
+    dd.dataset.value = val;
+  };
+  ddBtn.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('open'); });
+  document.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('open'); });
+  dd.querySelectorAll('.rp-dd-opt').forEach(opt => {
+    opt.addEventListener('click', async () => {
+      dd.classList.remove('open');
+      const mode = opt.dataset.val;
+      const prev = dd.dataset.value;
+      if (mode === prev) return;
+      setActive(mode); // оптимистично
+      const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+      const { data: { session } } = await sb.auth.getSession();
+      try {
+        const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id + path, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+        const jj = await r.json();
+        if (!jj.ok) throw new Error(jj.error || 'error');
+      } catch { setActive(prev); } // откат
+    });
+  });
+}
+
 function renderRpServer(id, name, j) {
   const box = $('#rpServerDetail');
   const s = j.state;
@@ -1139,15 +1188,15 @@ function renderRpServer(id, name, j) {
           <b>Оповещения о смертях тиммейтов</b>
           <p>Когда тиммейт умирает - куда отправлять «{Ник} умер, квадрат: X».</p>
         </div>
-        <div class="rp-dd" id="rpDeathDD" data-value="${esc(j.deathNotify || 'off')}">
-          <button type="button" class="rp-dd-btn">
-            <span class="rp-dd-label">${esc((DEATH_OPTS.find(o => o[0] === (j.deathNotify || 'off')) || DEATH_OPTS[0])[1])}</span>
-            <svg class="ic rp-dd-chev"><use href="#i-chevron"/></svg>
-          </button>
-          <div class="rp-dd-menu">
-            ${DEATH_OPTS.map(([val, label]) => `<button type="button" class="rp-dd-opt${val === (j.deathNotify || 'off') ? ' active' : ''}" data-val="${val}">${esc(label)}</button>`).join('')}
-          </div>
+        ${channelDDHtml('rpDeathDD', j.deathNotify)}
+      </div>
+
+      <div class="rp-toggle">
+        <div>
+          <b>События карты</b>
+          <p>Грузовой корабль, патрульный вертолёт, чинук (появился/ушёл) - куда слать.</p>
         </div>
+        ${channelDDHtml('rpEventDD', j.eventNotify)}
       </div>
 
       <h3 class="d-players-title">Команда · ${team.length} чел. (${online} онлайн)</h3>
@@ -1177,44 +1226,8 @@ function renderRpServer(id, name, j) {
     } catch { btn.classList.toggle('on', !enabled); }
   });
 
-  const dd = $('#rpDeathDD');
-  if (dd) {
-    const ddBtn = dd.querySelector('.rp-dd-btn');
-    const ddLabel = dd.querySelector('.rp-dd-label');
-    const setActive = (val) => {
-      dd.querySelectorAll('.rp-dd-opt').forEach(o => o.classList.toggle('active', o.dataset.val === val));
-      const opt = dd.querySelector(`.rp-dd-opt[data-val="${val}"]`);
-      if (opt) ddLabel.textContent = opt.textContent;
-      dd.dataset.value = val;
-    };
-    ddBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dd.classList.toggle('open');
-    });
-    document.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('open'); });
-    dd.querySelectorAll('.rp-dd-opt').forEach(opt => {
-      opt.addEventListener('click', async () => {
-        dd.classList.remove('open');
-        const mode = opt.dataset.val;
-        const prev = dd.dataset.value;
-        if (mode === prev) return;
-        setActive(mode); // оптимистично
-        const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
-        const { data: { session } } = await sb.auth.getSession();
-        try {
-          const r = await fetch(worker.replace(/\/$/, '') + '/api/rustplus/' + id + '/death-notify', {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode })
-          });
-          const jj = await r.json();
-          if (!jj.ok) throw new Error(jj.error || 'error');
-        } catch {
-          setActive(prev); // откат
-        }
-      });
-    });
-  }
+  wireChannelDD('rpDeathDD', id, '/death-notify');
+  wireChannelDD('rpEventDD', id, '/event-notify');
 }
 
 $('#bmForm').addEventListener('submit', async e => {
