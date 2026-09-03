@@ -423,6 +423,7 @@ main{max-width:1200px;margin:0 auto;padding:0 24px 80px}
 .bm-search .btn{flex:none}
 .bm-results{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 .bm-loading,.bm-empty{color:var(--muted);font-size:13.5px;text-align:center;padding:18px}
+.bm-more{text-align:center;margin-top:4px}
 
 .bm-card{
   display:flex;align-items:center;gap:16px;

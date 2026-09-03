@@ -1247,34 +1247,56 @@ function renderRpServer(id, name, j) {
   wireChannelDD('rpEventDD', id, '/event-notify');
 }
 
-$('#bmForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  $('#bmErr').textContent = '';
-  const q = $('#bmInput').value.trim();
-  if (!q) return;
-  if (!sb) { $('#bmErr').textContent = 'Supabase не настроен.'; return; }
+let bmLastQuery = '';
 
+function extractPageOffset(nextUrl) {
+  if (!nextUrl) return null;
+  try { return new URL(nextUrl).searchParams.get('page[offset]'); } catch { return null; }
+}
+
+async function runServerSearch(pageOffset) {
   const results = $('#bmResults');
-  results.innerHTML = '<div class="bm-loading">Ищем…</div>';
+  $('#bmMoreBtn')?.closest('.bm-more')?.remove();
+  if (!pageOffset) results.innerHTML = '<div class="bm-loading">Ищем…</div>';
 
   try {
     const { data: res, error } = await sb.functions.invoke('bm-proxy', {
-      body: { action: 'searchServers', params: { q } }
+      body: { action: 'searchServers', params: pageOffset ? { q: bmLastQuery, pageOffset } : { q: bmLastQuery } }
     });
     if (error) throw new Error(error.message);
     if (!res || !res.ok) throw new Error('BattleMetrics: ' + (res?.status || 'ошибка'));
 
     const list = res.data?.data || [];
-    if (!list.length) { results.innerHTML = '<div class="bm-empty">Ничего не найдено.</div>'; return; }
-
-    results.innerHTML = '';
+    if (!pageOffset) {
+      if (!list.length) { results.innerHTML = '<div class="bm-empty">Ничего не найдено.</div>'; return; }
+      results.innerHTML = '';
+    }
     list.forEach(s => results.appendChild(renderServer(s)));
+
+    const nextOffset = extractPageOffset(res.data?.links?.next);
+    if (nextOffset) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bm-more';
+      wrap.innerHTML = '<button class="btn btn-ghost" id="bmMoreBtn" type="button">Показать ещё</button>';
+      results.appendChild(wrap);
+      $('#bmMoreBtn').addEventListener('click', () => runServerSearch(nextOffset));
+    }
   } catch (err) {
-    results.innerHTML = '';
+    if (!pageOffset) results.innerHTML = '';
     $('#bmErr').textContent = /bm-proxy|fn|Function/i.test(err.message)
       ? 'Функция bm-proxy недоступна - задеплой её и добавь токен.'
       : (err.message || 'Ошибка поиска.');
   }
+}
+
+$('#bmForm').addEventListener('submit', e => {
+  e.preventDefault();
+  $('#bmErr').textContent = '';
+  const q = $('#bmInput').value.trim();
+  if (!q) return;
+  if (!sb) { $('#bmErr').textContent = 'Supabase не настроен.'; return; }
+  bmLastQuery = q;
+  runServerSearch();
 });
 
 function esc(s) { return String(s ?? '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])); }
