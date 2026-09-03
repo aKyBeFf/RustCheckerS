@@ -48,7 +48,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=54" />
+  <link rel="stylesheet" href="styles.css?v=55" />
 </head>
 <body class="auth-pending">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -552,7 +552,7 @@
       <div class="checker">
         <button class="link-back" data-go="landing"><svg class="ic"><use href="#i-back"/></svg> Назад</button>
         <div class="detail-card">
-          <div class="detail-top"><h2>Политика данных</h2></div>
+          <div class="detail-top"><h2>Политика конфиденциальности</h2></div>
           <div class="policy">
             <p>RustChecker - сервис для проверки серверов и игроков Rust. Ниже - какие данные мы собираем и зачем.</p>
             <h3>Что мы храним</h3>
@@ -588,7 +588,8 @@
       RustChecker
     </div>
     <div class="foot-links">
-      <a href="#" data-go="privacy">Политика данных</a>
+      <a href="https://t.me/RustChecke" target="_blank" rel="noopener">Telegram-канал</a>
+      <a href="#" data-go="privacy">Политика конфиденциальности</a>
       <p>Проект никак не связан с Facepunch Studios</p>
     </div>
   </footer>
@@ -606,7 +607,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=53"></script>
-  <script src="app.js?v=53"></script>
+  <script src="config.js?v=55"></script>
+  <script src="app.js?v=55"></script>
+  <script>setTimeout(function(){document.body.classList.remove('auth-pending')},6000)</script>
 </body>
 </html>

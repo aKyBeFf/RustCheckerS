@@ -163,10 +163,17 @@ body.auth-pending #navUserWrap{visibility:hidden}
 .ps-unit b{font-size:26px;font-weight:700;letter-spacing:-.01em;display:block;font-family:'JetBrains Mono',monospace}
 .ps-unit span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 
-.tariffs{overflow-x:auto;margin-bottom:22px}
-.tariff-table{width:100%;border-collapse:collapse;min-width:520px}
+.tariffs{overflow-x:auto;overscroll-behavior-x:contain;margin-bottom:22px}
+.tariff-table{width:100%;border-collapse:collapse}
 .tariff-table th,.tariff-table td{padding:13px 14px;text-align:center;border-bottom:1px solid var(--line);font-size:14px}
 .tariff-table td:first-child,.tariff-table th:first-child{text-align:left;color:var(--muted);font-size:13.5px}
+@media(max-width:520px){
+  .tariff-table th,.tariff-table td{padding:9px 4px;font-size:11.5px}
+  .tariff-table td:first-child,.tariff-table th:first-child{font-size:11px}
+  .tariff-table thead th{font-size:10.5px}
+  .tariff-price{font-size:11px;gap:2px}
+  .tariff-price .ic{width:11px;height:11px}
+}
 .tariff-table thead th{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--txt);padding-bottom:14px}
 .tariff-table thead th:nth-child(3){color:var(--amber)}
 .tariff-table thead th:nth-child(4){color:var(--accent)}
