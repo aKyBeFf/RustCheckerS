@@ -1,6 +1,15 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+const CFG = window.RUSTCHK_CONFIG || {};
+const configured = CFG.SUPABASE_URL && !CFG.SUPABASE_URL.includes('ВСТАВЬ');
+let sb = null;
+if (configured && window.supabase) {
+  sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
+} else {
+  console.warn('[RustChecker] Supabase не настроен - впиши SUPABASE_URL в config.js');
+}
+
 function showView(name) {
   $$('.view').forEach(v => v.classList.toggle('active', v.dataset.view === name));
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -12,7 +21,6 @@ function showView(name) {
 
 let loggedIn = false;
 
-// Красивое модальное подтверждение вместо window.confirm(). Возвращает Promise<boolean>.
 function confirmDialog({ title = 'Подтверждение', text = '', okText = 'Подтвердить', cancelText = 'Отмена', danger = false } = {}) {
   return new Promise(resolve => {
     const back = $('#confirmModal');
@@ -82,8 +90,6 @@ document.addEventListener('click', e => {
   showView(feat);
 });
 
-// Прогоняем все рендеры профиля так, чтобы падение одного не срывало остальные
-// (иначе ошибка в renderPlan/renderTelegram молча блокировала loadStats и updateRpCard).
 function renderProfileAll(profile) {
   const steps = [
     () => renderTier(profile),
@@ -99,15 +105,29 @@ function renderProfileAll(profile) {
   }
 }
 
-window.addEventListener('load', async () => {
-  startCounters();
+(async () => {
+  const revealNav = () => document.body.classList.remove('auth-pending');
+  const navTimeout = setTimeout(revealNav, 4000);
 
-  if (sb) {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      const info = await loadProfile();
-      if (info) renderProfileAll(info.profile);
+  try {
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const info = await loadProfile();
+        if (info) renderProfileAll(info.profile);
+        else updateNav(null);
+      } else {
+        updateNav(null);
+      }
+    } else {
+      updateNav(null);
     }
+  } catch (e) {
+    console.error('[RustChecker] auth init', e);
+    updateNav(null);
+  } finally {
+    clearTimeout(navTimeout);
+    revealNav();
   }
 
   if (handleSteamReturn()) return;
@@ -119,16 +139,7 @@ window.addEventListener('load', async () => {
   if (gated.includes(saved)) showView(loggedIn ? saved : 'landing');
   else if (safe.includes(saved)) showView(saved);
   else if (loggedIn) showView('profile');
-});
-
-const CFG = window.RUSTCHK_CONFIG || {};
-const configured = CFG.SUPABASE_URL && !CFG.SUPABASE_URL.includes('ВСТАВЬ');
-let sb = null;
-if (configured && window.supabase) {
-  sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
-} else {
-  console.warn('[RustChecker] Supabase не настроен - впиши SUPABASE_URL в config.js');
-}
+})();
 
 let authMode = 'register';
 function setAuthMode(mode) {
@@ -511,6 +522,22 @@ function renderStatsGrid(grid, data) {
     `<div class="d-metric"><span>${esc(label)}</span><b>${esc(val)}</b></div>`).join('');
 }
 
+function renderTariffButtons(tier, active) {
+  const premCell = $('#buyPremiumCell');
+  const unlimCell = $('#buyUnlimitedCell');
+  if (!premCell || !unlimCell) return;
+  if (active && tier === 'unlimited') {
+    premCell.innerHTML = '<span class="tf-yes">—</span>';
+    unlimCell.innerHTML = '<span class="tf-yes">Активен</span>';
+  } else if (active && tier === 'premium') {
+    premCell.innerHTML = '<span class="tf-yes">Активен</span>';
+    unlimCell.innerHTML = '<button class="btn btn-primary btn-sm full" data-buy="unlimited">Улучшить</button>';
+  } else {
+    premCell.innerHTML = '<button class="btn btn-ghost btn-sm full" data-buy="premium">Купить</button>';
+    unlimCell.innerHTML = '<button class="btn btn-primary btn-sm full" data-buy="unlimited">Купить</button>';
+  }
+}
+
 let planTimer = null;
 function renderPlan(profile) {
   const el = $('#planStatus');
@@ -523,6 +550,7 @@ function renderPlan(profile) {
   const expired = until && until.getTime() < Date.now();
   const active = tier !== 'free' && !expired;
 
+  renderTariffButtons(tier, active);
   el.hidden = false;
   el.className = 'plan-status ' + (active ? tier : 'free');
 
@@ -537,8 +565,6 @@ function renderPlan(profile) {
     return;
   }
 
-  // Тариф активен, но без даты окончания (напр. Unlimited/бессрочно или ключ без срока) -
-  // показываем статус без обратного отсчёта, чтобы не падать на until.getTime().
   if (!until) {
     el.innerHTML = `<div class="ps-row">
         <span class="tier-badge ${tier}">${tier.toUpperCase()}</span>
@@ -579,7 +605,7 @@ function renderTelegram(profile) {
   if (unlink) unlink.style.display = linked ? '' : 'none';
   if (linked) {
     const uname = profile.telegram_username ? '@' + profile.telegram_username : 'привязан';
-    txt.innerHTML = `✅ Telegram привязан: <b>${esc(uname)}</b>. Уведомления включены.`;
+    txt.innerHTML = `<svg class="ic ic-ok"><use href="#i-check"/></svg> Telegram привязан: <b>${esc(uname)}</b>. Уведомления включены.`;
   } else {
     txt.textContent = 'Привяжи Telegram, чтобы получать сообщения, когда отслеживаемый игрок зашёл или вышел с сервера.';
   }
@@ -677,36 +703,36 @@ function buyNotice(type, title, text) {
     <div class="bn-body"><b>${esc(title)}</b><span>${esc(text)}</span></div>`;
 }
 
-document.querySelectorAll('[data-buy]').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
-    if (!worker) { buyNotice('err', 'Оплата недоступна', 'Не задан WORKER_URL в config.js.'); return; }
-    if (!sb) return;
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { setAuthMode('login'); showView('register'); return; }
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-buy]');
+  if (!btn) return;
+  const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
+  if (!worker) { buyNotice('err', 'Оплата недоступна', 'Не задан WORKER_URL в config.js.'); return; }
+  if (!sb) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { setAuthMode('login'); showView('register'); return; }
 
-    const label = btn.innerHTML;
-    btn.disabled = true; btn.textContent = 'Готовим счёт…';
-    buyNotice('wait', 'Формируем счёт…', 'Секунду, отправляем в Telegram.');
-    try {
-      const r = await fetch(worker.replace(/\/$/, '') + '/api/buy', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: btn.dataset.buy })
-      });
-      const j = await r.json();
-      if (!j.ok) {
-        if (j.error === 'no_telegram') buyNotice('err', 'Нужен Telegram', 'Сначала привяжи Telegram в профиле - счёт придёт туда.');
-        else throw new Error(j.detail || j.error || 'error');
-      } else {
-        buyNotice('ok', 'Счёт отправлен в Telegram ⭐', 'Открой чат с ботом и оплати звёздами. После оплаты тариф активируется автоматически.');
-      }
-    } catch (err) {
-      buyNotice('err', 'Не удалось', err.message);
-    } finally {
-      btn.disabled = false; btn.innerHTML = label;
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Готовим счёт…';
+  buyNotice('wait', 'Формируем счёт…', 'Секунду, отправляем в Telegram.');
+  try {
+    const r = await fetch(worker.replace(/\/$/, '') + '/api/buy', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: btn.dataset.buy })
+    });
+    const j = await r.json();
+    if (!j.ok) {
+      if (j.error === 'no_telegram') buyNotice('err', 'Нужен Telegram', 'Сначала привяжи Telegram в профиле - счёт придёт туда.');
+      else throw new Error(j.detail || j.error || 'error');
+    } else {
+      buyNotice('ok', 'Счёт отправлен в Telegram', 'Открой чат с ботом и оплати звёздами. После оплаты тариф активируется автоматически.');
     }
-  });
+  } catch (err) {
+    buyNotice('err', 'Не удалось', err.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = label;
+  }
 });
 
 function translateKeyError(msg = '') {
@@ -812,7 +838,6 @@ async function updateRpCard() {
   } catch {}
 }
 
-// Реверс-привязка: код сгенерил бот, вводим его тут
 $('#tgCodeBtn')?.addEventListener('click', async () => {
   const err = $('#tgCodeErr');
   if (err) err.textContent = '';
@@ -856,7 +881,6 @@ $('#tgCodeBtn')?.addEventListener('click', async () => {
   }
 });
 
-// Отвязать Telegram
 $('#tgUnlinkBtn')?.addEventListener('click', async () => {
   const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
   if (!worker) { alert('Не задан WORKER_URL.'); return; }
@@ -935,9 +959,9 @@ function rpShowSetup(show) {
 }
 
 async function rpStatus() {
-  const box = $('#rpStatus');
+  const dot = $('#rpStatusDot');
   const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
-  if (!box || !worker) return;
+  if (!dot || !worker) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
@@ -945,15 +969,8 @@ async function rpStatus() {
       headers: { Authorization: 'Bearer ' + session.access_token }
     });
     const j = await r.json();
-    if (j.linked) {
-      box.className = 'rp-status on';
-      box.innerHTML = '<span class="status-dot online"></span> Rust+ подключён - слушаем пейринги.';
-      rpShowSetup(false);
-    } else {
-      box.className = 'rp-status';
-      box.innerHTML = '<span class="status-dot"></span> Rust+ ещё не подключён - вставь credentials ниже.';
-      rpShowSetup(true);
-    }
+    dot.classList.toggle('online', !!j.linked);
+    rpShowSetup(!j.linked);
   } catch {}
 }
 
@@ -981,7 +998,7 @@ async function loadPairings() {
     <div class="bm-card rp-item" data-open-rp="${esc(p.id)}" data-rp-name="${esc(p.name)}" style="cursor:pointer">
       <div class="bm-main">
         <div class="bm-name"><span class="status-dot online"></span>${esc(p.name)}</div>
-        <div class="bm-sub"><span class="mono">${esc(p.ip)}:${esc(p.port)}</span>${p.notify_vending ? '<span class="live-tag">🛒 магазы</span>' : ''}</div>
+        <div class="bm-sub"><span class="mono">${esc(p.ip)}:${esc(p.port)}</span>${p.notify_vending ? '<span class="live-tag"><svg class="ic"><use href="#i-cart"/></svg> магазы</span>' : ''}</div>
       </div>
       <button class="btn btn-ghost btn-sm" data-del-rp="${esc(p.id)}">Удалить</button>
     </div>`).join('');
@@ -1021,7 +1038,7 @@ async function loadRpDevices(id, team) {
     const isAlarm = d.entity_type === 'alarm' || /alarm|сигнал/i.test(d.name || '');
     if (isAlarm) {
       return `<div class="bm-card"><div class="bm-main">
-        <div class="bm-name">🚨 Сигнализация</div>
+        <div class="bm-name"><svg class="ic"><use href="#i-alarm"/></svg> Сигнализация</div>
         <div class="bm-sub"><span>Рейд-оповещение</span></div>
       </div>
       <button class="switch ${d.raid_alert ? 'on' : ''}" data-raid="${esc(d.id)}"><i></i></button></div>`;
@@ -1031,7 +1048,7 @@ async function loadRpDevices(id, team) {
       `<label class="rp-allow"><input type="checkbox" data-sid="${esc(m.steamId)}" ${allowed.includes(String(m.steamId)) ? 'checked' : ''}> ${esc(m.name)}</label>`).join('');
     return `<div class="dev-card" data-dev="${esc(d.id)}">
       <div class="dev-top">
-        <div class="bm-name">🔌 ${esc(d.name || 'Переключатель')}</div>
+        <div class="bm-name"><svg class="ic"><use href="#i-bolt"/></svg> ${esc(d.name || 'Переключатель')}</div>
         <div class="dev-btns">
           <button class="btn btn-ghost btn-sm" data-tog="1">Вкл</button>
           <button class="btn btn-ghost btn-sm" data-tog="0">Выкл</button>
@@ -1136,7 +1153,7 @@ function wireChannelDD(ddId, id, path) {
       const mode = opt.dataset.val;
       const prev = dd.dataset.value;
       if (mode === prev) return;
-      setActive(mode); // оптимистично
+      setActive(mode);
       const worker = (window.RUSTCHK_CONFIG || {}).WORKER_URL;
       const { data: { session } } = await sb.auth.getSession();
       try {
@@ -1147,7 +1164,7 @@ function wireChannelDD(ddId, id, path) {
         });
         const jj = await r.json();
         if (!jj.ok) throw new Error(jj.error || 'error');
-      } catch { setActive(prev); } // откат
+      } catch { setActive(prev); }
     });
   });
 }
@@ -1178,7 +1195,7 @@ function renderRpServer(id, name, j) {
       <div class="rp-toggle">
         <div>
           <b>Уведомления о магазинах</b>
-          <p>Когда на карте появляется вендинг - бот пишет в игровой чат «🛒 На квадрате X появился магазин».</p>
+          <p>Когда на карте появляется вендинг - бот пишет в игровой чат «На квадрате X появился магазин».</p>
         </div>
         <button class="switch ${j.notifyVending ? 'on' : ''}" id="rpVendBtn" data-id="${esc(id)}"><i></i></button>
       </div>
@@ -1206,7 +1223,7 @@ function renderRpServer(id, name, j) {
       <div id="rpDevices" class="bm-results"><div class="bm-loading">Загружаем…</div></div>
 
       <h3 class="d-players-title">Магазины на карте · ${vending.length}</h3>
-      <div class="rp-vending">${vending.length ? vending.map(v => `<span class="pchip">🛒 ${esc(v.grid)}</span>`).join('') : '<div class="bm-empty">Магазинов не видно (сервер может их не транслировать).</div>'}</div>
+      <div class="rp-vending">${vending.length ? vending.map(v => `<span class="pchip"><svg class="ic"><use href="#i-cart"/></svg> ${esc(v.grid)}</span>`).join('') : '<div class="bm-empty">Магазинов не видно (сервер может их не транслировать).</div>'}</div>
     </div>`;
 
   loadRpDevices(id, team);
@@ -1424,7 +1441,7 @@ async function loadTracked() {
   const { data, error } = await sb.from('tracked_players')
     .select('*').eq('user_id', user.id).order('created_at', { ascending: false });
   if (error) { box.innerHTML = `<div class="bm-empty">${esc(error.message)}</div>`; return; }
-  if (!data.length) { box.innerHTML = '<div class="bm-empty">Ты пока никого не отслеживаешь. Открой сервер или игрока и нажми «Отслеживать».</div>'; return; }
+  if (!data.length) { box.innerHTML = '<div class="bm-empty">Ты ни за кем не следишь.</div>'; return; }
 
   box.innerHTML = data.map(r => {
     const online = r.last_status === 'online';
@@ -1528,38 +1545,3 @@ async function trackPlayer(playerId, playerName, serverId, serverName, btn, mode
   }
 }
 
-function animateCounter(el, target) {
-  if (!el) return;
-  let cur = 0;
-  const step = target / 45;
-  const t = setInterval(() => {
-    cur += step;
-    if (cur >= target) { cur = target; clearInterval(t); }
-    el.textContent = Math.floor(cur).toLocaleString('ru-RU');
-  }, 20);
-}
-function startCounters() {
-  animateCounter($('#stServers'), 12480);
-  animateCounter($('#stPlayers'), 184902);
-}
-
-const reveals = $$('.reveal');
-reveals.forEach((el, i) => (el.dataset.d = (i % 4) * 90));
-
-function show(el) {
-  el.style.transitionDelay = (el.dataset.d || 0) + 'ms';
-  el.classList.add('in');
-}
-
-if ('IntersectionObserver' in window) {
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { show(e.target); io.unobserve(e.target); }
-    });
-  }, { threshold: 0.08 });
-  reveals.forEach(el => io.observe(el));
-} else {
-  reveals.forEach(show);
-}
-
-setTimeout(() => reveals.forEach(el => el.classList.contains('in') || show(el)), 1200);

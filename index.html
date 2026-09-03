@@ -5,16 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RustChecker — статус серверов и игроков Rust | Rust Checker</title>
 
-  <!-- SEO: поиск по разным вариантам написания названия -->
   <meta name="description" content="RustChecker (Rust Checker) — сервис для проверки статуса серверов и отслеживания игроков в игре Rust. Онлайн серверов, вайпы, карты и мониторинг игроков в реальном времени." />
   <meta name="keywords" content="RustChecker, Rust Checker, RUST CHECKER, rustchecker, rust checker, rust-checker, раст чекер, раст чек, раст чекер серверы, проверка серверов rust, статус серверов rust, мониторинг игроков rust, rust server status, rust player tracker, rust servers online, rustchecker.xyz" />
   <meta name="author" content="RustChecker" />
   <meta name="application-name" content="RustChecker" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
-  <meta name="theme-color" content="#0e0f13" />
+  <meta name="theme-color" content="#0a0c0a" />
   <link rel="canonical" href="https://rustchecker.xyz/" />
 
-  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="RustChecker" />
   <meta property="og:title" content="RustChecker — статус серверов и игроков Rust" />
@@ -23,13 +21,11 @@
   <meta property="og:image" content="https://rustchecker.xyz/logo.png" />
   <meta property="og:locale" content="ru_RU" />
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="RustChecker — статус серверов и игроков Rust" />
   <meta name="twitter:description" content="Проверка статуса серверов Rust и отслеживание игроков в реальном времени." />
   <meta name="twitter:image" content="https://rustchecker.xyz/logo.png" />
 
-  <!-- Структурированные данные: альтернативные названия помогают поиску по разным написаниям -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -51,98 +47,104 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=53" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=54" />
 </head>
-<body>
+<body class="auth-pending">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <symbol id="i-logo" viewBox="0 0 24 24">
-        <path d="M12 2 4 6v6c0 4.5 3.2 8.5 8 10 4.8-1.5 8-5.5 8-10V6l-8-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M9 12.5l2 2 4-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
+        <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
+        <line x1="6" x2="6.01" y1="6" y2="6"/>
+        <line x1="6" x2="6.01" y1="18" y2="18"/>
       </symbol>
-      <symbol id="i-server" viewBox="0 0 24 24">
-        <rect x="3" y="4" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <rect x="3" y="13" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <circle cx="7" cy="7.5" r="1" fill="currentColor"/>
-        <circle cx="7" cy="16.5" r="1" fill="currentColor"/>
+      <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
       </symbol>
-      <symbol id="i-users" viewBox="0 0 24 24">
-        <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <path d="M16 5.5c1.6.4 2.7 1.8 2.7 3.4 0 1-.4 1.9-1 2.5M17 14.2c2.3.5 3.8 2.3 3.8 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/>
       </symbol>
-      <symbol id="i-pulse" viewBox="0 0 24 24">
-        <path d="M3 12h4l2.5-6 4 12 2.5-6H21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
       </symbol>
-      <symbol id="i-link" viewBox="0 0 24 24">
-        <path d="M9 2.5v4.5M15 2.5v4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-        <path d="M6.5 7h11v3.5a5.5 5.5 0 0 1-11 0V7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        <path d="M12 16v5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/>
+        <path d="m12 5 7 7-7 7"/>
       </symbol>
-      <symbol id="i-bolt" viewBox="0 0 24 24">
-        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7"/>
+        <path d="M19 12H5"/>
       </symbol>
-      <symbol id="i-shield" viewBox="0 0 24 24">
-        <path d="M12 3 5 6v5c0 4 3 7.5 7 9 4-1.5 7-5 7-9V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/>
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
       </symbol>
-      <symbol id="i-arrow" viewBox="0 0 24 24">
-        <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </symbol>
-      <symbol id="i-back" viewBox="0 0 24 24">
-        <path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
       </symbol>
-      <symbol id="i-mail" viewBox="0 0 24 24">
-        <rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
       </symbol>
-      <symbol id="i-lock" viewBox="0 0 24 24">
-        <rect x="4.5" y="10" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <circle cx="12" cy="15" r="1.4" fill="currentColor"/>
+      <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 9 6 6 6-6"/>
       </symbol>
-      <symbol id="i-user" viewBox="0 0 24 24">
-        <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21 21-4.34-4.34"/>
+        <circle cx="11" cy="11" r="8"/>
       </symbol>
-      <symbol id="i-check" viewBox="0 0 24 24">
-        <path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
       </symbol>
-      <symbol id="i-chevron" viewBox="0 0 24 24">
-        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+        <circle cx="12" cy="10" r="3"/>
       </symbol>
-      <symbol id="i-search" viewBox="0 0 24 24">
-        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
-        <path d="m20 20-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M12 7v5l4 2"/>
       </symbol>
-      <symbol id="i-clock" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <symbol id="i-radar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/>
+        <path d="M4 6h.01"/>
+        <path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/>
+        <path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/>
+        <path d="M12 18h.01"/>
+        <path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/>
+        <circle cx="12" cy="12" r="2"/>
+        <path d="m13.41 10.59 5.66-5.66"/>
       </symbol>
-      <symbol id="i-pin" viewBox="0 0 24 24">
-        <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-      </symbol>
-      <symbol id="i-history" viewBox="0 0 24 24">
-        <path d="M3.5 12a8.5 8.5 0 1 1 2.6 6.1M3.5 12V7M3.5 12h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M12 8v4.2l3 1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-      </symbol>
-      <symbol id="i-radar" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".55"/>
-        <path d="M12 12 18 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <circle cx="12" cy="12" r="1.4" fill="currentColor"/>
-        <circle cx="16" cy="9" r="1.1" fill="currentColor"/>
-      </symbol>
-      <symbol id="i-stats" viewBox="0 0 24 24">
-        <path d="M4 20V4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <path d="M4 20h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <rect x="7" y="12" width="3" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <rect x="12.5" y="8" width="3" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <rect x="18" y="10.5" width="3" height="6.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <symbol id="i-stats" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+        <path d="M18 17V9"/>
+        <path d="M13 17V5"/>
+        <path d="M8 17v-3"/>
       </symbol>
       <symbol id="i-steam" viewBox="0 0 24 24">
         <path fill="currentColor" d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012zM17.245 7.75c1.665 0 3.02-1.354 3.02-3.02s-1.355-3.02-3.02-3.02-3.02 1.354-3.02 3.02 1.355 3.02 3.02 3.02zm0-4.53c.831 0 1.51.679 1.51 1.51s-.679 1.51-1.51 1.51-1.51-.679-1.51-1.51.679-1.51 1.51-1.51z"/>
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>
+      </symbol>
+      <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m2.05 2.05 1.099-.028a1 1 0 0 1 1.008.815l2.69 14.347A1 1 0 0 0 7.83 18H18"/>
+        <path d="M4.563 5h16.435a1 1 0 0 1 .981 1.204l-1.026 6.226A2 2 0 0 1 18.962 14H6.25"/>
+        <circle cx="18" cy="20" r="2"/>
+        <circle cx="8" cy="20" r="2"/>
+      </symbol>
+      <symbol id="i-alarm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+        <path d="M22 8c0-2.3-.8-4.3-2-6"/>
+        <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+        <path d="M4 2C2.8 3.7 2 5.7 2 8"/>
       </symbol>
     </defs>
   </svg>
@@ -184,8 +186,8 @@
   <main>
     <section class="view active" data-view="landing">
       <div class="hero">
-        <h1>Проверяй серверы и игроков <span class="grad">за секунды</span></h1>
-        <p class="sub">Статус, онлайн, FPS и время до вайпа - всё в одном месте. Создай аккаунт и подключи Rust+ для управления прямо с сайта.</p>
+        <h1>Сайт и Telegram-бот для проверки серверов и игроков Rust</h1>
+        <p class="sub">Ищешь сервер - вот статус, онлайн и время до вайпа. Следишь за игроком - как только он зайдёт или выйдет из игры, бот пришлёт сообщение в Telegram.</p>
 
         <div class="cta-row">
           <button class="btn btn-primary btn-lg" data-go="register">
@@ -197,31 +199,30 @@
 
       <div class="features" id="features">
         <div class="section-head center">
-          <span class="pill"><svg class="ic"><use href="#i-shield"/></svg> Что умеет Rust Checker</span>
-          <h2>Всё для мониторинга в одном интерфейсе</h2>
+          <h2>Что умеет RustChecker</h2>
         </div>
-        <div class="feat-grid">
-          <article class="feat reveal feat-link" data-feat="checker">
+
+        <div class="feat-main">
+          <article class="feat feat-primary feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-radar"/></svg></div>
-            <h3>Отслеживание игроков</h3>
-            <p>Найдите игрока и нажмите «Отследить». Как только человек выйдет из игры - вам придёт сообщение в Telegram.</p>
+            <h3>Следить за игроком</h3>
+            <p>Найди игрока и нажми «Отследить». Как только он выйдет из игры - тебе придёт сообщение в Telegram, держать сайт открытым не нужно.</p>
           </article>
-          <article class="feat reveal feat-link" data-feat="checker">
+          <article class="feat feat-secondary feat-link" data-feat="checker">
             <div class="feat-ic"><svg class="ic"><use href="#i-server"/></svg></div>
-            <h3>Список серверов</h3>
-            <p>Можно найти почти любой сервер и посмотреть всю информацию о нём.</p>
-          </article>
-          <article class="feat reveal feat-link" data-feat="lookup">
-            <div class="feat-ic"><svg class="ic"><use href="#i-stats"/></svg></div>
-            <h3>Узнать статистику <span class="tag-soon">Premium</span></h3>
-            <p>Сколько наиграли, K/D, сколько ресурсов нафармили и многое другое - по любому игроку.</p>
-          </article>
-          <article class="feat reveal feat-link" data-feat="lookup">
-            <div class="feat-ic"><svg class="ic"><use href="#i-history"/></svg></div>
-            <h3>Профиль игрока <span class="tag-soon">Premium</span></h3>
-            <p>Ник, аватар и полная статистика Rust любого игрока по SteamID или ссылке.</p>
+            <h3>Найти сервер</h3>
+            <p>Название, статус, онлайн и время до вайпа - по почти любому серверу Rust.</p>
           </article>
         </div>
+
+        <article class="feat feat-premium feat-link" data-feat="lookup">
+          <div class="feat-ic"><svg class="ic"><use href="#i-stats"/></svg></div>
+          <div class="fp-body">
+            <h3>Premium</h3>
+            <p>K/D, часы в игре, добытые ресурсы и профиль по SteamID - от <span class="tariff-price"><svg class="ic ic-star"><use href="#i-star"/></svg>100</span>/мес</p>
+          </div>
+          <svg class="ic fp-arrow"><use href="#i-arrow"/></svg>
+        </article>
       </div>
     </section>
 
@@ -383,7 +384,7 @@
             <h3>Уведомления Telegram</h3>
             <p id="tgText">Привяжи Telegram, чтобы получать сообщения, когда отслеживаемый игрок зашёл или вышел с сервера.</p>
             <div class="tg-bycode" id="tgByCode">
-              <p class="tg-bycode-hint">Открой бота, нажми «🔗 Привязать аккаунт» и введи код:</p>
+              <p class="tg-bycode-hint">Открой бота, нажми кнопку «Привязать аккаунт» и введи код:</p>
               <div class="input">
                 <svg class="ic"><use href="#i-link"/></svg>
                 <input id="tgCodeInput" type="text" placeholder="Код из бота" maxlength="6" autocomplete="off" />
@@ -409,30 +410,47 @@
 
         <div class="plan-status" id="planStatus" hidden></div>
 
-        <div class="plans two" id="plansGrid">
-          <article class="plan-card">
-            <h3>Premium</h3>
-            <p class="plan-price">100 <span>⭐</span></p>
-            <p class="plan-sub">в месяц</p>
-            <ul class="plan-feats">
-              <li>До 8 отслеживаний игроков</li>
-              <li>Просмотр чужой статистики Rust</li>
-              <li>Уведомления в Telegram</li>
-            </ul>
-            <button class="btn btn-ghost full" data-buy="premium">Купить за ⭐ 100</button>
-          </article>
-          <article class="plan-card featured">
-            <div class="plan-badge">Максимум</div>
-            <h3>Unlimited</h3>
-            <p class="plan-price">200 <span>⭐</span></p>
-            <p class="plan-sub">в месяц</p>
-            <ul class="plan-feats">
-              <li>Безлимит отслеживаний</li>
-              <li>Безлимит привязок</li>
-              <li>Всё из Premium + бонусы</li>
-            </ul>
-            <button class="btn btn-primary full" data-buy="unlimited">Купить за ⭐ 200</button>
-          </article>
+        <div class="tariffs">
+          <table class="tariff-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Free</th>
+                <th>Premium</th>
+                <th>Unlimited</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Отслеживание игроков</td>
+                <td>1</td><td>8</td><td>без лимита</td>
+              </tr>
+              <tr>
+                <td>Статистика чужих игроков</td>
+                <td class="tf-no">—</td><td class="tf-yes">есть</td><td class="tf-yes">есть</td>
+              </tr>
+              <tr>
+                <td>Уведомления в Telegram</td>
+                <td class="tf-yes">есть</td><td class="tf-yes">есть</td><td class="tf-yes">есть</td>
+              </tr>
+              <tr>
+                <td>Привязка Rust+ / Steam</td>
+                <td>1</td><td>1</td><td>без лимита</td>
+              </tr>
+              <tr class="tariff-price-row">
+                <td>Цена в месяц</td>
+                <td>бесплатно</td>
+                <td><span class="tariff-price"><svg class="ic ic-star"><use href="#i-star"/></svg>100</span></td>
+                <td><span class="tariff-price"><svg class="ic ic-star"><use href="#i-star"/></svg>200</span></td>
+              </tr>
+              <tr class="tariff-buy-row">
+                <td></td>
+                <td></td>
+                <td id="buyPremiumCell"><button class="btn btn-ghost btn-sm full" data-buy="premium">Купить</button></td>
+                <td id="buyUnlimitedCell"><button class="btn btn-primary btn-sm full" data-buy="unlimited">Купить</button></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div class="buy-notice" id="buyNotice" hidden></div>
 
@@ -463,14 +481,12 @@
 
         <div class="detail-card">
           <div class="detail-top">
-            <h2><svg class="ic"><use href="#i-link"/></svg> Подключить Rust+</h2>
-            <span class="badge">BETA</span>
+            <h2><svg class="ic"><use href="#i-link"/></svg> Подключить Rust+ <span class="status-dot" id="rpStatusDot"></span></h2>
+            <span class="beta-tag">beta</span>
           </div>
 
-          <div id="rpStatus" class="rp-status"></div>
-
           <div id="rpConnected" hidden>
-            <p class="detail-hint">Rust+ подключён. Заходи в игру → Rust+ → <b>Pair with server</b> - серверы появятся ниже сами.<br>⏳ Токен из расширения живёт ~<b>14 дней</b>. Если серверы перестали обновляться - получи новый токен в расширении и нажми «Перепривязать».</p>
+            <p class="rp-note">Подключено. Заходи в игру → Rust+ → <b>Pair with server</b> - серверы появятся ниже сами. Токен из расширения живёт ~<b>14 дней</b>: если серверы перестали обновляться, получи новый в расширении и нажми «Перепривязать».</p>
             <button class="btn btn-ghost btn-sm" id="rpRelink">Перепривязать</button>
           </div>
 
@@ -480,7 +496,7 @@
               <li>Скопируй выданные <b>credentials</b> и вставь их ниже - один раз.</li>
               <li>Зайди в игру → меню Rust+ → <b>Pair with server</b>. Сервер появится тут <b>сам</b>.</li>
             </ol>
-            <p class="detail-hint">Расширение работает у тебя в браузере - данные Steam никуда не передаются, к нам приходят только FCM-креды для приёма пейрингов.</p>
+            <p class="rp-note">Расширение работает у тебя в браузере - данные Steam никуда не передаются, к нам приходят только FCM-креды для приёма пейрингов.</p>
 
             <form id="rpForm" class="form">
               <label class="field"><span>Credentials</span>
@@ -508,7 +524,6 @@
     <section class="view" data-view="tracked">
       <div class="checker">
         <div class="checker-head"><h2>Отслеживаемые игроки</h2></div>
-        <p class="detail-hint">Список игроков, за которыми ты следишь. Открой профиль, чтобы посмотреть, где играет, или удали из отслеживания.</p>
         <div id="trackedList" class="bm-results"></div>
       </div>
     </section>
